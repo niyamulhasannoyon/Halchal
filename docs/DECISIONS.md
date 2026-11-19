@@ -302,3 +302,43 @@ This file contains the chronological log of all architectural, product, and engi
 - **Consequences:**
   - *Positive:* 100% privacy-compliant long-term analytics, zero impact on the JS bundle budget, flawless complex Bengali shaping in exported complaint documents, and robust resilience against crowd-sourcing reporting bias.
   - *Trade-off:* 7-day pattern trends represent citizen activity rather than smart-meter grid telemetry, clearly communicated via the required UI bias notice.
+
+
+---
+
+### ADR-0013: Android-First Flutter Client Architecture, Resilient Offline Queuing, Multi-Modal HUD, Location Integrity, and FCM Data-Only Push with Action Buttons
+- **Date:** 2026-11-19
+- **Status:** Accepted
+- **Context:**
+  Expanding Halchal to native Android requires an application optimized for low-end smartphones (Android 8.0 - 15), intermittent 2G/3G connectivity, and active blackout conditions.
+  Key constraints and requirements:
+  1. *Backend Contract Preservation:* Reuses existing Supabase database schema, RPC functions (`get_zone_status`, `get_zone_7day_insights`), and Edge Functions (`submit-report`, `restore-vote`). Zero breaking backend changes permitted.
+  2. *Resilient Offline Queuing:* Network dropouts during blackouts must not drop citizen reports. Local database must use maintained libraries (`hive_ce`). Raw coordinates must exist only briefly on disk while queued and be permanently deleted immediately upon transmission.
+  3. *Active Connectivity Verification:* `connectivity_plus` only reports interface status (e.g. connected to dead Wi-Fi or exhausted cell data). Real DNS/socket reachability probes are required.
+  4. *Location Integrity:* Mock location flags (`Position.isMocked`) are Android-only hints easily bypassed by root/hooking. Hard gating relies on Google Play Integrity attestation + server-side home-zone bounds check (`gridDisk(home_h3, 1)`).
+  5. *Push Notification Action Buttons:* FCM notification payloads cannot render custom action buttons on Android. Notifications must be delivered via high-priority DATA-ONLY FCM messages, rendered locally via `flutter_local_notifications`, and button taps handled by a minimal background handler targeting `restore-vote`.
+  6. *Aggressive OEM Task Killers:* Xiaomi (MIUI/HyperOS), Samsung (One UI), Oppo (ColorOS), and Vivo (Funtouch OS) aggressively kill background processes.
+- **Decision:**
+  1. **Feature-First Architecture with Riverpod & Hive CE:**
+     - Modular feature structure: `lib/core` (constants, network, storage, integrity, notifications), `lib/features/{home,map,history,settings}`.
+     - Offline queue implemented with maintained `hive_ce`. Items older than 30 minutes are automatically dropped. Raw coordinates (`lat`, `lng`) are wiped from storage immediately upon HTTP 200 response.
+     - Exponential backoff retry scheduled via WorkManager (`workmanager` package).
+  2. **Active Reachability Probing (`ConnectivityService`):**
+     - Never trusts `connectivity_plus` flag alone. Actively probes DNS/socket reachability before attempting queue flushes.
+  3. **Multi-Modal "Never Color Alone" HUD Components:**
+     - `StatusCard` implements all 5 states (`ok`, `low`, `out`, `unverified`, `unknown`) with distinct colors, dedicated icons, explicit Bengali words ("আছে", "কম", "নেই", "অনিশ্চিত", "খবর নেই"), and custom border styles (solid, dashed, dotted).
+     - Strict Golden Rule: `unknown` is never green.
+  4. **Location Integrity & Attestation (`LocationIntegrityService`):**
+     - Emits user warning banner: *"সঠিক তথ্যের জন্য ফোনের আসল GPS ব্যবহার করুন।"* on `isMocked == true` without blocking valid edge cases.
+     - Passes Google Play Integrity tokens to `submit-report` for server-side verification.
+  5. **FCM Data-Only Message & Background Action Handler:**
+     - Interactive restoration alerts delivered via high-priority data payloads.
+     - `flutter_local_notifications` renders notification with actions: *"হ্যাঁ, ফিরেছে"* (`action_restored`) and *"না, এখনো নেই"* (`action_not_restored`).
+     - Handled by top-level `@pragma('vm:entry-point') notificationTapBackground()` executing a lightweight HTTP POST to `restore-vote` with the signed token (zero Supabase session required).
+  6. **OEM Battery Optimization Guidance & Settings:**
+     - `BatteryOptimizationDialog` guides users on Xiaomi, Samsung, Oppo, and Vivo to whitelist the app from battery killing.
+  7. **Release Optimization:**
+     - Target release APK size `< 25 MB` per ABI via `--split-per-abi`.
+- **Consequences:**
+  - *Positive:* 100% contract parity with existing backend, resilient reporting during severe blackouts, zero raw GPS data leaks, reliable push notification action responses from the Android notification tray, and clean modular code verified by 26 automated tests.
+  - *Trade-off:* Background WorkManager retries on Android are subject to OS battery management constraints, addressed through user OEM optimization guidance.

@@ -32,7 +32,7 @@ void callbackDispatcher() {
 
       final pendingItems = queueManager.getPendingItems();
       if (pendingItems.isEmpty) {
-        return Future.value(true);
+        return true;
       }
 
       // 3. Verify actual internet reachability (do not trust interface flag alone)
@@ -42,7 +42,7 @@ void callbackDispatcher() {
         if (kDebugMode) {
           print('[HalchalWorkManager] No active internet. Postponing retry.');
         }
-        return Future.value(true);
+        return true;
       }
 
       // 4. Flush pending items
@@ -80,12 +80,12 @@ void callbackDispatcher() {
       }
 
       apiClient.close();
-      return Future.value(true);
+      return true;
     } catch (e) {
       if (kDebugMode) {
         print('[HalchalWorkManager] Task execution error: $e');
       }
-      return Future.value(false);
+      return false;
     }
   });
 }
@@ -98,10 +98,7 @@ class WorkmanagerService {
   /// Initializes WorkManager
   static Future<void> initialize() async {
     try {
-      await Workmanager().initialize(
-        callbackDispatcher,
-        isInDebugMode: kDebugMode,
-      );
+      await Workmanager().initialize(callbackDispatcher);
     } catch (e) {
       if (kDebugMode) {
         print('[WorkmanagerService] Initialization error: $e');

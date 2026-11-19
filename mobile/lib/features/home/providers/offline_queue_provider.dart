@@ -1,8 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/integrity/location_integrity.dart';
-import '../../../core/network/halchal_api_client.dart';
 import '../../../core/providers/core_providers.dart';
-import '../../../core/storage/offline_queue.dart';
 import 'home_zone_provider.dart';
 
 /// Provider for the number of pending offline reports

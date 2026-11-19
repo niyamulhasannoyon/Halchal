@@ -64,7 +64,7 @@ class StatusCard extends StatelessWidget {
                 : null,
             child: Container(
               constraints: const BoxConstraints(minHeight: 136),
-              padding: const EdgeInsets.all(14),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: isDark ? AppTheme.oledSurface : AppTheme.lightSurface,
                 borderRadius: BorderRadius.circular(16),
@@ -83,14 +83,14 @@ class StatusCard extends StatelessWidget {
                       Icon(
                         categoryDetails.icon,
                         color: isDark ? AppTheme.oledTextPrimary : AppTheme.lightTextPrimary,
-                        size: 22,
+                        size: 20,
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 6),
                       Expanded(
                         child: Text(
                           categoryDetails.titleBn,
                           style: theme.textTheme.headlineMedium?.copyWith(
-                            fontSize: 16,
+                            fontSize: 15,
                             fontWeight: FontWeight.bold,
                             height: 1.3,
                             color: isDark
@@ -100,6 +100,7 @@ class StatusCard extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
+                      const SizedBox(width: 4),
                       // Multi-modal Status Badge (Color + Icon + Explicit Bengali Word)
                       _StatusBadge(
                         token: token,
@@ -129,7 +130,7 @@ class StatusCard extends StatelessWidget {
                             child: Text(
                               reporterText,
                               style: theme.textTheme.bodyMedium?.copyWith(
-                                fontSize: 13,
+                                fontSize: 12,
                                 height: 1.5,
                                 color: isDark
                                     ? AppTheme.oledTextSecondary
@@ -198,10 +199,10 @@ class _StatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3.5),
       decoration: BoxDecoration(
         color: token.tint,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: token.border, width: 1),
       ),
       child: Row(
@@ -209,14 +210,14 @@ class _StatusBadge extends StatelessWidget {
         children: [
           Icon(
             token.icon,
-            size: 14,
+            size: 13,
             color: token.text,
           ),
-          const SizedBox(width: 5),
+          const SizedBox(width: 4),
           Text(
             token.bengaliLabel,
             style: TextStyle(
-              fontSize: 13,
+              fontSize: 12,
               fontWeight: FontWeight.bold,
               color: token.text,
               height: 1.2,

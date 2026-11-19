@@ -3,7 +3,6 @@ import 'package:uuid/uuid.dart';
 import '../../../core/background/workmanager_service.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/constants/app_strings_bn.dart';
-import '../../../core/integrity/location_integrity.dart';
 import '../../../core/providers/core_providers.dart';
 import '../../../core/storage/offline_queue.dart';
 import '../../../theme/app_theme.dart';
@@ -33,7 +32,7 @@ class ReportSubmissionNotifier extends StateNotifier<ReportSubmissionState> {
   /// Submits a user's one-tap utility report with full offline and integrity handling
   Future<ReportSubmissionState> submitReport({
     required String category,
-    required String state, // 'ok', 'low', 'out'
+    required String reportState, // 'ok', 'low', 'out'
     double? priceBdt,
   }) async {
     state = const ReportSubmissionState(status: SubmissionStatus.loading);
@@ -49,7 +48,7 @@ class ReportSubmissionNotifier extends StateNotifier<ReportSubmissionState> {
     if (lastReport != null) {
       final elapsed = DateTime.now().difference(lastReport);
       if (elapsed < ApiConstants.rateLimitCooldown) {
-        final result = const ReportSubmissionState(
+        const result = ReportSubmissionState(
           status: SubmissionStatus.error,
           message: AppStringsBn.reportRateLimited,
         );
@@ -76,9 +75,9 @@ class ReportSubmissionNotifier extends StateNotifier<ReportSubmissionState> {
     final reportId = const Uuid().v4();
 
     // 3. Map to theme status state for optimistic local UI update
-    final halchalState = state == 'ok'
+    final halchalState = reportState == 'ok'
         ? HalchalStatusState.ok
-        : state == 'low'
+        : reportState == 'low'
             ? HalchalStatusState.low
             : HalchalStatusState.out;
 
@@ -95,7 +94,7 @@ class ReportSubmissionNotifier extends StateNotifier<ReportSubmissionState> {
       final queueItem = OfflineQueueItem(
         id: reportId,
         category: category,
-        state: state,
+        state: reportState,
         priceBdt: priceBdt,
         lat: pos.latitude,
         lng: pos.longitude,
@@ -123,7 +122,7 @@ class ReportSubmissionNotifier extends StateNotifier<ReportSubmissionState> {
 
       await apiClient.submitReport(
         category: category,
-        state: state,
+        state: reportState,
         priceBdt: priceBdt,
         lat: pos.latitude,
         lng: pos.longitude,
@@ -147,7 +146,7 @@ class ReportSubmissionNotifier extends StateNotifier<ReportSubmissionState> {
       final queueItem = OfflineQueueItem(
         id: reportId,
         category: category,
-        state: state,
+        state: reportState,
         priceBdt: priceBdt,
         lat: pos.latitude,
         lng: pos.longitude,

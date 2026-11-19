@@ -50,7 +50,7 @@ class _QuickReportBottomSheetState extends ConsumerState<QuickReportBottomSheet>
 
     final result = await notifier.submitReport(
       category: _selectedCategory,
-      state: _selectedState,
+      reportState: _selectedState,
       priceBdt: price,
     );
 

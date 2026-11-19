@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '../constants/app_strings_bn.dart';
 import 'notification_actions_handler.dart';
@@ -49,9 +48,8 @@ class NotificationService {
     const initSettings = InitializationSettings(android: androidSettings);
 
     await _localNotifications.initialize(
-      initSettings,
+      settings: initSettings,
       onDidReceiveNotificationResponse: (response) {
-        // Foreground or opened from tray
         if (response.actionId != null) {
           notificationTapBackground(response);
         }
@@ -102,7 +100,6 @@ class NotificationService {
       return granted ?? false;
     }
 
-    // Fallback to Firebase Messaging requestPermission
     final settings = await FirebaseMessaging.instance.requestPermission(
       alert: true,
       badge: true,
@@ -143,14 +140,14 @@ class NotificationService {
         'restore_url': data['restore_url'],
       });
 
-      final androidDetails = AndroidNotificationDetails(
+      const androidDetails = AndroidNotificationDetails(
         channelRestorationId,
         channelRestorationName,
         importance: Importance.max,
         priority: Priority.high,
         playSound: true,
         enableVibration: true,
-        actions: const [
+        actions: [
           AndroidNotificationAction(
             'action_restored',
             AppStringsBn.notifRestoredAction, // "হ্যাঁ, ফিরেছে"
@@ -167,10 +164,10 @@ class NotificationService {
       );
 
       await _localNotifications.show(
-        id,
-        title,
-        body,
-        NotificationDetails(android: androidDetails),
+        id: id,
+        title: title,
+        body: body,
+        notificationDetails: const NotificationDetails(android: androidDetails),
         payload: payloadJson,
       );
     } else {
@@ -184,10 +181,10 @@ class NotificationService {
       );
 
       await _localNotifications.show(
-        id,
-        title,
-        body,
-        const NotificationDetails(android: androidDetails),
+        id: id,
+        title: title,
+        body: body,
+        notificationDetails: const NotificationDetails(android: androidDetails),
         payload: jsonEncode(data),
       );
     }
