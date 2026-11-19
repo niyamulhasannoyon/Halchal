@@ -24,9 +24,24 @@ export interface MockDatabaseState {
   reports: Array<Record<string, unknown>>;
   zones: Set<string>;
   zoneStatuses: Map<string, Record<string, unknown>>;
+  pushSubscriptions: Array<Record<string, unknown>>;
 }
 
-export function createMockSupabaseClient(initialZones: string[] = [BANANI_H3, GULSHAN2_H3, DHANMONDI_H3]): {
+export const DHAKA_SEED_ZONES = [
+  '883cf10ca1fffff', // ধানমন্ডি
+  '883cf10eb1fffff', // মিরপুর ১০
+  '883cf10c93fffff', // গুলশান ১
+  '883cf13b27fffff', // গুলশান ২
+  '883cf13b25fffff', // বনানী
+  '883cf10583fffff', // উত্তরা সেক্টর ৩
+  '883cf10cebfffff', // মোহাম্মদপুর
+  '883cf10cbdfffff', // ফার্মগেট
+  '883cf13941fffff', // বাড্ডা
+  '883cf1766bfffff', // লালবাগ
+  '883cf13b21fffff',
+];
+
+export function createMockSupabaseClient(initialZones: string[] = DHAKA_SEED_ZONES): {
   client: SupabaseClient;
   db: MockDatabaseState;
 } {
@@ -34,6 +49,7 @@ export function createMockSupabaseClient(initialZones: string[] = [BANANI_H3, GU
     reports: [],
     zones: new Set(initialZones),
     zoneStatuses: new Map(),
+    pushSubscriptions: [],
   };
 
   const client = {
@@ -138,16 +154,72 @@ export function createMockSupabaseClient(initialZones: string[] = [BANANI_H3, GU
 
       return { data: null, error: { message: `Unknown mock function ${functionName}` } };
     },
-    from: (_tableName: string) => ({
-      select: () => ({
-        eq: () => ({
-          maybeSingle: async () => ({ data: null, error: null }),
-        }),
+    from: (tableName: string) => ({
+      select: (_fields?: string) => {
+        let currentRows =
+          tableName === 'push_subscriptions'
+            ? [...db.pushSubscriptions]
+            : tableName === 'zones'
+            ? Array.from(db.zones).map((z) => ({ h3_index: z, name_bn: 'ধানমন্ডি' }))
+            : [];
+
+        return {
+          contains: (column: string, values: string[]) => {
+            currentRows = currentRows.filter((row) => {
+              const rowArr = (row as Record<string, unknown>)[column];
+              if (Array.isArray(rowArr)) {
+                return values.every((v) => rowArr.includes(v));
+              }
+              return false;
+            });
+            return {
+              data: currentRows,
+              error: null,
+            };
+          },
+          eq: (col: string, val: unknown) => ({
+            maybeSingle: async () => {
+              const found = currentRows.find(
+                (r) => (r as Record<string, unknown>)[col] === val
+              );
+              return { data: found || null, error: null };
+            },
+            data: currentRows.filter(
+              (r) => (r as Record<string, unknown>)[col] === val
+            ),
+            error: null,
+          }),
+          data: currentRows,
+          error: null,
+        };
+      },
+      delete: () => ({
+        in: async (col: string, vals: string[]) => {
+          if (tableName === 'push_subscriptions') {
+            const valSet = new Set(vals);
+            db.pushSubscriptions = db.pushSubscriptions.filter(
+              (r) => !valSet.has(String(r[col]))
+            );
+          }
+          return { data: null, error: null };
+        },
       }),
       update: () => ({
         eq: async () => ({ error: null }),
       }),
-      upsert: async () => ({ error: null }),
+      upsert: async (row: Record<string, unknown>) => {
+        if (tableName === 'push_subscriptions') {
+          const idx = db.pushSubscriptions.findIndex(
+            (r) => r.token_or_endpoint === row.token_or_endpoint
+          );
+          if (idx >= 0) {
+            db.pushSubscriptions[idx] = { ...db.pushSubscriptions[idx], ...row };
+          } else {
+            db.pushSubscriptions.push({ id: crypto.randomUUID(), ...row });
+          }
+        }
+        return { error: null };
+      },
     }),
     auth: {
       admin: {

@@ -1,5 +1,5 @@
 # Supabase CLI Project Configuration for Halchal (হালচাল)
-project_id = "halchal"
+project_id = "jfllpmaljrprcomysvpc"
 
 [api]
 enabled = true

@@ -116,11 +116,11 @@ export async function handleReportSubmission(
     // Step 5: Home-Zone Gate
     // User may report only for home cell or ring-1 neighbors. 7-day change lock.
     // -------------------------------------------------------------------------
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
-    const supabase = deps.supabaseClient || createClient(supabaseUrl, supabaseServiceKey, {
-      auth: { persistSession: false, autoRefreshToken: false },
-    });
+    const supabase = deps.supabaseClient || createClient(
+      Deno.env.get('SUPABASE_URL') || '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '',
+      { auth: { persistSession: false, autoRefreshToken: false } }
+    );
 
     const profileStore = deps.profileStore || new SupabaseProfileStore(supabase);
     await enforceHomeZoneGate(

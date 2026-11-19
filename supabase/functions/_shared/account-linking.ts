@@ -94,3 +94,62 @@ export async function syncUserTier(
     multiplier: TRUST_TIER_MULTIPLIERS[newTier],
   };
 }
+
+/**
+ * Client-Side Auth Flow Helper 1: Anonymous sign-in with Captcha
+ * Invoked on first app open. Reads remain completely public without login,
+ * but reporting requires an anonymous or upgraded session with attestation.
+ */
+export async function signInAnonymouslyWithCaptcha(
+  client: SupabaseClient,
+  captchaToken: string
+) {
+  return await client.auth.signInAnonymously({
+    options: {
+      captchaToken,
+    },
+  });
+}
+
+/**
+ * Client-Side Auth Flow Helper 2: Link Google Identity
+ * Upgrades anonymous session to verified Google identity (tier: 'google', weight multiplier: 1.0).
+ */
+export async function linkGoogleIdentity(
+  client: SupabaseClient,
+  redirectTo?: string
+) {
+  return await client.auth.linkIdentity({
+    provider: 'google',
+    options: {
+      redirectTo,
+    },
+  });
+}
+
+/**
+ * Client-Side Auth Flow Helper 3: Initiate Phone Number Linking (SMS OTP)
+ * Sends an OTP SMS to verify citizen phone number.
+ */
+export async function sendPhoneOtp(
+  client: SupabaseClient,
+  phone: string
+) {
+  return await client.auth.updateUser({ phone });
+}
+
+/**
+ * Client-Side Auth Flow Helper 4: Verify Phone OTP and Link
+ * Completes phone verification (tier: 'phone', weight multiplier: 1.5).
+ */
+export async function verifyAndLinkPhoneOtp(
+  client: SupabaseClient,
+  phone: string,
+  token: string
+) {
+  return await client.auth.verifyOtp({
+    phone,
+    token,
+    type: 'phone_change',
+  });
+}

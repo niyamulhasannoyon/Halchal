@@ -30,5 +30,10 @@ Thumbs.db
 *.swp
 *.swo
 
+# Test & Build Caches
+*.tsbuildinfo
+test-results/
+playwright-report/
+
 # Supabase Local
 .supabase/

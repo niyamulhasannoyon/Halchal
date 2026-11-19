@@ -143,11 +143,11 @@ export async function handleRestoreVote(
     const deviceIdHash = await computeDeviceIdHash(payload.dev, deps.deviceSecret);
 
     // 4. Submit report to database RPC via service role
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
-    const supabase = deps.supabaseClient || createClient(supabaseUrl, supabaseServiceKey, {
-      auth: { persistSession: false, autoRefreshToken: false },
-    });
+    const supabase = deps.supabaseClient || createClient(
+      Deno.env.get('SUPABASE_URL') || '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '',
+      { auth: { persistSession: false, autoRefreshToken: false } }
+    );
 
     const { data: updatedStatus, error: rpcError } = await supabase.rpc('submit_report', {
       p_user: payload.sub,

@@ -119,7 +119,7 @@ export async function verifyAndConsumeActionToken(
   const isValidSig = await crypto.subtle.verify(
     'HMAC',
     key,
-    signatureBytes,
+    signatureBytes as BufferSource,
     new TextEncoder().encode(message)
   );
 

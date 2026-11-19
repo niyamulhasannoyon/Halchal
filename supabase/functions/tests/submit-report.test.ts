@@ -271,8 +271,8 @@ Deno.test('submit-report: home-zone gate initializes home cell and allows neighb
     body: JSON.stringify({
       category: 'water',
       state: 'low',
-      lat: 23.7940, // Gulshan 2 coordinates
-      lng: 90.4130,
+      lat: 23.7895, // Gulshan 2 coordinates
+      lng: 90.4149,
       accuracy_m: 20,
       client_ts: new Date().toISOString(),
       device_id: 'a0000000-0000-0000-0000-000000000001',
@@ -283,4 +283,98 @@ Deno.test('submit-report: home-zone gate initializes home cell and allows neighb
   assertEquals(res2.status, 200);
   const data2 = await res2.json();
   assertEquals(data2.h3_index, GULSHAN2_H3);
+});
+
+Deno.test('submit-report: allows changing home zone after 7 days have elapsed (Step 5)', async () => {
+  const { deps, authVerifier, attestationVerifier, profileStore } = createTestDependencies();
+  const userId = '11111111-1111-1111-1111-111111111111';
+  authVerifier.registerUser('test-jwt-1', { userId });
+  attestationVerifier.addAllowedToken('valid-token-1');
+
+  // Established home in Banani 8 days ago (> 7 days)
+  const eightDaysAgo = new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString();
+  profileStore.setInitialProfile(userId, BANANI_H3, eightDaysAgo);
+
+  // User reports for Dhanmondi (> 5km away, non-neighbor) -> MUST SUCCEED because 8 days elapsed!
+  const req = new Request('http://localhost/submit-report', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer test-jwt-1' },
+    body: JSON.stringify({
+      category: 'electricity',
+      state: 'out',
+      lat: DHANMONDI_LAT,
+      lng: DHANMONDI_LNG,
+      accuracy_m: 20,
+      client_ts: new Date().toISOString(),
+      device_id: 'a0000000-0000-0000-0000-000000000001',
+      attestation: 'valid-token-1',
+    }),
+  });
+  const res = await handleReportSubmission(req, deps);
+  assertEquals(res.status, 200);
+  const data = await res.json();
+  assertEquals(data.h3_index, DHANMONDI_H3);
+
+  // Profile home zone must now be updated to Dhanmondi
+  const updatedProfile = await profileStore.getProfile(userId);
+  assertEquals(updatedProfile?.home_h3, DHANMONDI_H3);
+});
+
+Deno.test('submit-report: invalidates Redis cache key zone:status:{h3} (Step 9)', async () => {
+  const { deps, authVerifier, attestationVerifier, redisClient } = createTestDependencies();
+  authVerifier.registerUser('test-jwt-1', { userId: '11111111-1111-1111-1111-111111111111' });
+  attestationVerifier.addAllowedToken('valid-token-1');
+
+  // Seed Redis cache
+  const cacheKey = `zone:status:${BANANI_H3}`;
+  await redisClient.set(cacheKey, JSON.stringify({ cached: true }));
+  assertEquals(await redisClient.get(cacheKey) !== null, true);
+
+  const req = new Request('http://localhost/submit-report', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer test-jwt-1' },
+    body: JSON.stringify({
+      category: 'electricity',
+      state: 'out',
+      lat: BANANI_LAT,
+      lng: BANANI_LNG,
+      accuracy_m: 20,
+      client_ts: new Date().toISOString(),
+      device_id: 'a0000000-0000-0000-0000-000000000001',
+      attestation: 'valid-token-1',
+    }),
+  });
+  const res = await handleReportSubmission(req, deps);
+  assertEquals(res.status, 200);
+
+  // Redis cache key MUST be deleted (invalidated)
+  assertEquals(await redisClient.get(cacheKey), null);
+});
+
+Deno.test('submit-report: maps database errors to appropriate Bengali HTTP errors (Step 8)', async () => {
+  const { deps, authVerifier, attestationVerifier } = createTestDependencies({
+    initialZones: [], // No zones seeded -> triggers P0004 ZONE_NOT_FOUND
+  });
+  authVerifier.registerUser('test-jwt-1', { userId: '11111111-1111-1111-1111-111111111111' });
+  attestationVerifier.addAllowedToken('valid-token-1');
+
+  const req = new Request('http://localhost/submit-report', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer test-jwt-1' },
+    body: JSON.stringify({
+      category: 'electricity',
+      state: 'out',
+      lat: BANANI_LAT,
+      lng: BANANI_LNG,
+      accuracy_m: 20,
+      client_ts: new Date().toISOString(),
+      device_id: 'a0000000-0000-0000-0000-000000000001',
+      attestation: 'valid-token-1',
+    }),
+  });
+  const res = await handleReportSubmission(req, deps);
+  assertEquals(res.status, 404);
+  const data = await res.json();
+  assertEquals(data.code, 'UNKNOWN_H3_ZONE');
+  assertEquals(data.error, 'এলাকাটি হালচালের মানচিত্রে অন্তর্ভুক্ত নয়');
 });

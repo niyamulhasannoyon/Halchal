@@ -69,7 +69,7 @@ export const Errors = {
     new AppError(
       403,
       'HOME_ZONE_LOCKED',
-      'আপনি শুধুমাত্র আপনার সংরক্ষিত এলাকা বা পার্শ্ববর্তী এলাকার জন্য রিপোর্ট করতে পারবেন। এলাকা পরিবর্তনের জন্য ৭ দিন অপেক্ষা করতে হবে।',
+      'আপনি শুধুমাত্র আপনার সংরক্ষিত এলাকা বা পার্শ্ববর্তী এলাকার জন্য রিপোর্ট করতে পারবেন। ৭ দিনের মধ্যে এলাকা পরিবর্তন করা যাবে না (৭ দিন পর পরিবর্তন সম্ভব)।',
       details
     ),
 
@@ -93,7 +93,7 @@ export const Errors = {
     new AppError(401, 'TOKEN_EXPIRED', 'ভোটের লিংকের মেয়াদ শেষ হয়ে গেছে।'),
 
   INVALID_ACTION_TOKEN: (detail?: string) =>
-    new AppError(403, 'INVALID_ACTION_TOKEN', 'ভোটের লিংকটি সঠিক নয়।', detail),
+    new AppError(403, 'INVALID_ACTION_TOKEN', detail || 'ভোটের লিংকটি সঠিক নয়।', detail),
 
   INTERNAL_ERROR: (msg?: string) =>
     new AppError(

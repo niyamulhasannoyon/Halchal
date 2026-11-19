@@ -11,6 +11,9 @@ export interface IRedisClient {
   del(...keys: string[]): Promise<number>;
   incr(key: string): Promise<number>;
   expire(key: string, seconds: number): Promise<number>;
+  sadd(key: string, ...members: string[]): Promise<number>;
+  smembers(key: string): Promise<string[]>;
+  srem(key: string, ...members: string[]): Promise<number>;
 }
 
 export class UpstashRedisWrapper implements IRedisClient {
@@ -36,7 +39,7 @@ export class UpstashRedisWrapper implements IRedisClient {
     if (opts?.ex) setOptions.ex = opts.ex;
     if (opts?.nx) setOptions.nx = opts.nx;
 
-    const res = await this.client.set(key, value, setOptions as Parameters<typeof this.client.set>[2]);
+    const res = await this.client.set(key, value, setOptions as Parameters<Redis['set']>[2]);
     return res;
   }
 
@@ -52,16 +55,42 @@ export class UpstashRedisWrapper implements IRedisClient {
   async expire(key: string, seconds: number): Promise<number> {
     return await this.client.expire(key, seconds);
   }
+
+  async sadd(key: string, ...members: string[]): Promise<number> {
+    if (members.length === 0) return 0;
+    return await this.client.sadd(key, members[0], ...members.slice(1));
+  }
+
+  async smembers(key: string): Promise<string[]> {
+    const res = await this.client.smembers(key);
+    return Array.isArray(res) ? res.map(String) : [];
+  }
+
+  async srem(key: string, ...members: string[]): Promise<number> {
+    if (members.length === 0) return 0;
+    return await this.client.srem(key, members[0], ...members.slice(1));
+  }
 }
 
 export class InMemoryRedisClient implements IRedisClient {
   private storage = new Map<string, { value: string; expiresAt?: number }>();
+  private sets = new Map<string, { set: Set<string>; expiresAt?: number }>();
 
   private cleanKey(key: string): boolean {
     const item = this.storage.get(key);
     if (!item) return false;
     if (item.expiresAt && Date.now() > item.expiresAt) {
       this.storage.delete(key);
+      return false;
+    }
+    return true;
+  }
+
+  private cleanSet(key: string): boolean {
+    const item = this.sets.get(key);
+    if (!item) return false;
+    if (item.expiresAt && Date.now() > item.expiresAt) {
+      this.sets.delete(key);
       return false;
     }
     return true;
@@ -87,6 +116,7 @@ export class InMemoryRedisClient implements IRedisClient {
     let count = 0;
     for (const key of keys) {
       if (this.storage.delete(key)) count++;
+      if (this.sets.delete(key)) count++;
     }
     return count;
   }
@@ -103,14 +133,59 @@ export class InMemoryRedisClient implements IRedisClient {
   }
 
   async expire(key: string, seconds: number): Promise<number> {
+    let touched = 0;
     const item = this.storage.get(key);
+    if (item) {
+      item.expiresAt = Date.now() + seconds * 1000;
+      touched = 1;
+    }
+    const setItem = this.sets.get(key);
+    if (setItem) {
+      setItem.expiresAt = Date.now() + seconds * 1000;
+      touched = 1;
+    }
+    return touched;
+  }
+
+  async sadd(key: string, ...members: string[]): Promise<number> {
+    this.cleanSet(key);
+    let item = this.sets.get(key);
+    if (!item) {
+      item = { set: new Set<string>() };
+      this.sets.set(key, item);
+    }
+    let added = 0;
+    for (const member of members) {
+      if (!item.set.has(member)) {
+        item.set.add(member);
+        added++;
+      }
+    }
+    return added;
+  }
+
+  async smembers(key: string): Promise<string[]> {
+    if (!this.cleanSet(key)) return [];
+    const item = this.sets.get(key);
+    return item ? Array.from(item.set) : [];
+  }
+
+  async srem(key: string, ...members: string[]): Promise<number> {
+    if (!this.cleanSet(key)) return 0;
+    const item = this.sets.get(key);
     if (!item) return 0;
-    item.expiresAt = Date.now() + seconds * 1000;
-    return 1;
+    let removed = 0;
+    for (const member of members) {
+      if (item.set.delete(member)) {
+        removed++;
+      }
+    }
+    return removed;
   }
 
   clear(): void {
     this.storage.clear();
+    this.sets.clear();
   }
 }
 

@@ -1,0 +1,255 @@
+@import "tailwindcss";
+
+@theme {
+  --font-bengali: var(--font-bengali-custom), "Hind Siliguri", "Noto Sans Bengali", system-ui, -apple-system, sans-serif;
+
+  /* Raw Dark OLED Tokens */
+  --color-oled-canvas: #070A0F;
+  --color-oled-surface: #111622;
+  --color-oled-surface-elevated: #182030;
+  --color-oled-border: #1E293B;
+  --color-oled-text-primary: #F8FAFC;
+  --color-oled-text-secondary: #94A3B8;
+  --color-oled-text-muted: #64748B;
+
+  /* Raw Light High-Contrast Tokens (Dhaka Sunlight Optimization) */
+  --color-light-canvas: #F8FAFC;
+  --color-light-surface: #FFFFFF;
+  --color-light-surface-elevated: #F1F5F9;
+  --color-light-border: #CBD5E1;
+  --color-light-border-strong: #94A3B8;
+  --color-light-text-primary: #070A0F;
+  --color-light-text-secondary: #334155;
+  --color-light-text-muted: #475569;
+
+  /* Status Colors: Dark Variants */
+  --color-status-ok-dark: #10B981;
+  --color-status-ok-dark-tint: rgba(16, 185, 129, 0.16);
+  --color-status-ok-dark-text: #6EE7B7;
+  --color-status-ok-dark-border: rgba(16, 185, 129, 0.45);
+
+  --color-status-low-dark: #F59E0B;
+  --color-status-low-dark-tint: rgba(245, 158, 11, 0.16);
+  --color-status-low-dark-text: #FCD34D;
+  --color-status-low-dark-border: rgba(245, 158, 11, 0.45);
+
+  --color-status-out-dark: #EF4444;
+  --color-status-out-dark-tint: rgba(239, 68, 68, 0.18);
+  --color-status-out-dark-text: #FCA5A5;
+  --color-status-out-dark-border: rgba(239, 68, 68, 0.45);
+
+  --color-status-unverified-dark: #94A3B8;
+  --color-status-unverified-dark-tint: rgba(100, 116, 139, 0.14);
+  --color-status-unverified-dark-text: #CBD5E1;
+  --color-status-unverified-dark-border: rgba(148, 163, 184, 0.4);
+
+  --color-status-unknown-dark: #64748B;
+  --color-status-unknown-dark-tint: rgba(30, 41, 59, 0.6);
+  --color-status-unknown-dark-text: #94A3B8;
+  --color-status-unknown-dark-border: #334155;
+
+  /* Status Colors: Light High-Contrast Variants (WCAG >= 4.5:1 verified) */
+  --color-status-ok-light: #047857;
+  --color-status-ok-light-tint: #ECFDF5;
+  --color-status-ok-light-text: #065F46;
+  --color-status-ok-light-border: #6EE7B7;
+
+  --color-status-low-light: #B45309;
+  --color-status-low-light-tint: #FFFBEB;
+  --color-status-low-light-text: #92400E;
+  --color-status-low-light-border: #FCD34D;
+
+  --color-status-out-light: #B91C1C;
+  --color-status-out-light-tint: #FEF2F2;
+  --color-status-out-light-text: #991B1B;
+  --color-status-out-light-border: #FCA5A5;
+
+  --color-status-unverified-light: #475569;
+  --color-status-unverified-light-tint: #F1F5F9;
+  --color-status-unverified-light-text: #1E293B;
+  --color-status-unverified-light-border: #94A3B8;
+
+  --color-status-unknown-light: #475569;
+  --color-status-unknown-light-tint: #E2E8F0;
+  --color-status-unknown-light-text: #334155;
+  --color-status-unknown-light-border: #94A3B8;
+}
+
+/* Light Theme Variables (Default fallback when not .dark) */
+:root {
+  --color-scheme: light;
+  --canvas-bg: #F8FAFC;
+  --surface-bg: #FFFFFF;
+  --surface-elevated: #F1F5F9;
+  --surface-border: #CBD5E1;
+  --surface-border-strong: #94A3B8;
+
+  --text-main: #070A0F;
+  --text-sub: #334155;
+  --text-tertiary: #64748B;
+
+  /* Status semantic maps */
+  --ok-primary: #047857;
+  --ok-tint: #ECFDF5;
+  --ok-text: #065F46;
+  --ok-border: #6EE7B7;
+
+  --low-primary: #B45309;
+  --low-tint: #FFFBEB;
+  --low-text: #92400E;
+  --low-border: #FCD34D;
+
+  --out-primary: #B91C1C;
+  --out-tint: #FEF2F2;
+  --out-text: #991B1B;
+  --out-border: #FCA5A5;
+
+  --unverified-primary: #475569;
+  --unverified-tint: #F1F5F9;
+  --unverified-text: #1E293B;
+  --unverified-border: #94A3B8;
+
+  --unknown-primary: #475569;
+  --unknown-tint: #E2E8F0;
+  --unknown-text: #334155;
+  --unknown-border: #94A3B8;
+
+  --hud-glow: rgba(0, 0, 0, 0.05);
+}
+
+/* Dark OLED Theme Variables */
+.dark {
+  --color-scheme: dark;
+  --canvas-bg: #070A0F;
+  --surface-bg: #111622;
+  --surface-elevated: #182030;
+  --surface-border: #1E293B;
+  --surface-border-strong: #334155;
+
+  --text-main: #F8FAFC;
+  --text-sub: #94A3B8;
+  --text-tertiary: #64748B;
+
+  /* Status semantic maps */
+  --ok-primary: #10B981;
+  --ok-tint: rgba(16, 185, 129, 0.16);
+  --ok-text: #6EE7B7;
+  --ok-border: rgba(16, 185, 129, 0.45);
+
+  --low-primary: #F59E0B;
+  --low-tint: rgba(245, 158, 11, 0.16);
+  --low-text: #FCD34D;
+  --low-border: rgba(245, 158, 11, 0.45);
+
+  --out-primary: #EF4444;
+  --out-tint: rgba(239, 68, 68, 0.18);
+  --out-text: #FCA5A5;
+  --out-border: rgba(239, 68, 68, 0.45);
+
+  --unverified-primary: #94A3B8;
+  --unverified-tint: rgba(100, 116, 139, 0.14);
+  --unverified-text: #CBD5E1;
+  --unverified-border: rgba(148, 163, 184, 0.4);
+
+  --unknown-primary: #64748B;
+  --unknown-tint: rgba(30, 41, 59, 0.6);
+  --unknown-text: #94A3B8;
+  --unknown-border: #334155;
+
+  --hud-glow: rgba(16, 185, 129, 0.08);
+}
+
+/* Base typography and accessibility rules */
+html {
+  font-family: var(--font-bengali);
+  font-size: 16px;
+  line-height: 1.65;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background-color: var(--canvas-bg);
+  color: var(--text-main);
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Bengali Glyphs line-height protection: prevent upper matra & subscript clipping */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--text-main);
+  letter-spacing: -0.01em;
+}
+
+h1 { font-size: 1.75rem; } /* 28px */
+h2 { font-size: 1.375rem; } /* 22px Header requirement */
+h3 { font-size: 1.125rem; } /* 18px */
+p, span, div, button, input {
+  line-height: 1.65;
+}
+
+/* Pulse animation for 'out' status state: ONLY if prefers-reduced-motion is false */
+@keyframes hudPulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.65;
+    transform: scale(0.97);
+  }
+}
+
+@keyframes liveDotGlow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0);
+  }
+}
+
+.animate-hud-pulse {
+  animation: hudPulse 2.4s ease-in-out infinite;
+}
+
+.animate-live-dot {
+  animation: liveDotGlow 2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-hud-pulse,
+  .animate-live-dot,
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Tactical HUD Utility Classes */
+.hud-border-solid {
+  border-style: solid;
+  border-width: 1.5px;
+}
+
+.hud-border-dashed {
+  border-style: dashed;
+  border-width: 1.5px;
+}
+
+.hud-border-dotted {
+  border-style: dotted;
+  border-width: 1.5px;
+}
+
+/* Touch Target Minimum (48px WCAG / 52px Tactical Thumb zone) */
+.touch-target {
+  min-height: 48px;
+  min-width: 48px;
+}

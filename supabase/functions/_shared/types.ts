@@ -114,3 +114,63 @@ export interface ActionTokenPayload {
   iat: number;       // issued at (epoch seconds)
   exp: number;       // expires at (epoch seconds, 15 min lifetime)
 }
+
+/**
+ * Push Subscription Record in public.push_subscriptions
+ */
+export interface PushSubscriptionRecord {
+  id: string;
+  user_id?: string | null;
+  device_id?: string | null;
+  kind: 'webpush' | 'fcm';
+  token_or_endpoint: string;
+  keys?: {
+    p256dh?: string;
+    auth?: string;
+  } | null;
+  h3_subscriptions: string[];
+  categories: UtilityCategory[];
+  allow_night_alerts: boolean;
+  quiet_hours_start: string;
+  quiet_hours_end: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+/**
+ * Incoming event trigger payload for `notify-zone`
+ */
+export interface NotifyZoneEventPayload {
+  event_id?: string;
+  h3_index: string;
+  category: UtilityCategory;
+  from_state: ZoneState;
+  to_state: ZoneState;
+  at?: string;
+  interactive?: boolean; // When true, send 30-min restoration inquiry with action tokens
+}
+
+/**
+ * Push notification payload sent to client / service worker
+ */
+export interface NotificationMessagePayload {
+  title: string;
+  body: string;
+  icon?: string;
+  badge?: string;
+  tag?: string;
+  data: {
+    type: 'status_alert' | 'interactive_confirmation';
+    h3_index: string;
+    category: UtilityCategory;
+    state?: ZoneState;
+    action_token?: string;
+    restore_url?: string;
+    timestamp?: string;
+  };
+  actions?: Array<{
+    action: string;
+    title: string;
+    icon?: string;
+  }>;
+}
