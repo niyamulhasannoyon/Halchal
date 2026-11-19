@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { formatRelativeTimeBn } from '@/lib/bengali-utils';
 

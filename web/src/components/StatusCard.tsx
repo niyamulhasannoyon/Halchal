@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { UtilityCategory, ZoneDisplayState, UTILITY_CATEGORIES } from '@/lib/theme';
 import { StateBadge } from './StateBadge';

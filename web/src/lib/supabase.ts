@@ -92,3 +92,26 @@ export async function ensureAnonymousSession(): Promise<string | null> {
     return null;
   }
 }
+
+/**
+ * Initiates Google OAuth sign-in flow
+ */
+export async function signInWithGoogle(redirectTo?: string) {
+  const client = getSupabaseBrowserClient();
+  const origin = typeof window !== 'undefined' ? window.location.origin : '';
+  return client.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: redirectTo || `${origin}/auth/callback`,
+    },
+  });
+}
+
+/**
+ * Signs out the current user session
+ */
+export async function signOutUser() {
+  const client = getSupabaseBrowserClient();
+  return client.auth.signOut();
+}
+

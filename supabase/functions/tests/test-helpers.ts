@@ -152,6 +152,54 @@ export function createMockSupabaseClient(initialZones: string[] = DHAKA_SEED_ZON
         return { data: results, error: null };
       }
 
+      if (functionName === 'delete_user_account') {
+        const userId = String(args.p_user_id);
+        const initialReportCount = db.reports.length;
+        db.reports = db.reports.filter((r) => r.user_id !== userId);
+        const reportsDeleted = initialReportCount - db.reports.length;
+
+        const initialSubCount = db.pushSubscriptions.length;
+        db.pushSubscriptions = db.pushSubscriptions.filter((s) => s.user_id !== userId);
+        const subsDeleted = initialSubCount - db.pushSubscriptions.length;
+
+        return {
+          data: {
+            success: true,
+            user_id: userId,
+            reports_deleted: reportsDeleted,
+            subscriptions_deleted: subsDeleted,
+            profile_deleted: true,
+          },
+          error: null,
+        };
+      }
+
+      if (functionName === 'get_admin_metrics') {
+        return {
+          data: {
+            timestamp: new Date().toISOString(),
+            reports: {
+              last_1_minute: db.reports.length,
+              last_5_minutes: db.reports.length,
+              last_1_hour: db.reports.length,
+              per_minute_avg: db.reports.length / 5.0,
+            },
+            zones_by_state: {
+              ok: 2,
+              low: 1,
+              out: 1,
+              unverified: 1,
+              unknown: 5,
+            },
+            unverified_zones: 1,
+            total_zones: db.zones.size,
+            push_subscribers: db.pushSubscriptions.length,
+            status_events_24h: 3,
+          },
+          error: null,
+        };
+      }
+
       return { data: null, error: { message: `Unknown mock function ${functionName}` } };
     },
     from: (tableName: string) => ({

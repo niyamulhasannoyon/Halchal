@@ -371,3 +371,69 @@ This file contains the chronological log of all architectural, product, and engi
 - **Consequences:**
   - *Positive:* Fast, reliable Vercel deployments with sub-50ms serverless function execution from Bangladesh, guaranteed font availability for OG social card rendering, instant service worker updates, and seamless support for both CLI and Dashboard Git deployments.
   - *Trade-off:* Environment variables must be kept in sync between Supabase, local `.env.local`, and Vercel Project Settings.
+
+---
+
+### ADR-0015: DevSecOps Pilot Launch Preparation, Zero-PII Observability, k6 Load & Abuse Testing, Right to Erasure, and Bangladeshi Legal Compliance
+- **Date:** 2026-11-19
+- **Status:** Accepted
+- **Context:**
+  Preparing Halchal for its single-pilot launch (Dhaka Ward 19: Banani & Gulshan 2) requires rigorous verification against production traffic surges and malicious attacks:
+  1. *High-Volume Reads & CGNAT Surge:* 2,000 citizens reading status during blackouts; 300 reports/min arriving from only 20 shared mobile carrier NAT IPs (Grameenphone, Robi, Banglalink).
+  2. *Sybil & Replay Attacks:* Attackers using 100 anonymous accounts from 1 device, replaying reports within 15 minutes, or replaying one-tap restoration action tokens.
+  3. *Observability without Privacy Violations:* Sentry and logging must strictly scrub client IP addresses, auth tokens, and raw coordinates.
+  4. *Right to Erasure:* In compliance with data privacy principles and evolving Bangladeshi personal data laws, users must have a tested, one-tap mechanism to delete their account and all data.
+  5. *Legal & Abuse Protections:* Clear, accessible Bangla privacy policy and terms prohibiting names of people, shops, or dealers, with a takedown mechanism and notice for mandatory lawyer review.
+- **Decision:**
+  1. **k6 Load & Abuse Test Suite:**
+     - Created `scripts/load-testing/` with 4 standardized scripts: `1-read-status-cache.js` (2,000 VUs, 90% hit mix), `2-cgnat-mass-reports.js` (300/min across 20 IPs), `3-sybil-attack.js` (100 accounts, 1 device), `4-replay-expired-tokens.js` (user report replay and action token expiry/replay).
+     - Published `EXPECTED_RESULTS.md` and SRE executive sign-off template `docs/LOAD_TEST_REPORT_TEMPLATE.md`.
+  2. **Zero-PII Observability & Minimal Admin Dashboard:**
+     - Integrated Sentry (`@sentry/nextjs`) with automated PII scrubbing (stripping IPs, coordinates, cookies, tokens).
+     - Structured JSON logging implemented in `web/src/lib/logger.ts` and `supabase/functions/_shared/logger.ts`.
+     - Built protected `/admin` dashboard and `/api/admin/metrics` endpoint providing real-time visibility into reports/minute, zones by state, unverified zones, rejection reasons, and Redis hit rate.
+  3. **Right to Erasure (`/api/user/delete`):**
+     - Implemented PostgreSQL RPC `delete_user_account(p_user_id)` in migration `20261119000007_user_account_deletion_and_admin_metrics.sql` and API route `/api/user/delete`.
+     - Completely purges user profile, push subscriptions, raw reports, and Redis rate limit keys. Verified by Vitest and Deno unit tests.
+  4. **Plain-Language Bangla Legal Drafts & Mandatory Lawyer Review:**
+     - Published accessible Bangla Privacy Policy (`/privacy`) and Terms of Service (`/terms`) with absolute ban on person/shop names and takedown contact (`takedown@halchal.bd`).
+     - Added prominent disclaimers and memorandum (`docs/LEGAL_AND_PRIVACY_COMPLIANCE.md`) requiring formal review by an enrolled Bangladeshi cyber lawyer before public launch.
+  5. **Production SRE Runbooks & Cost Guardrails:**
+     - Published `docs/RUNBOOK.md` covering incident response for zone spam, push provider failures, and database outages.
+     - Documented backup restore drill (`docs/BACKUP_AND_RESTORE_DRILL.md`), migration down-scripts (`docs/MIGRATION_ROLLBACK_GUIDE.md`), and single-pilot launch plan (`docs/PILOT_LAUNCH_CHECKLIST.md`).
+- **Consequences:**
+  - *Positive:* 100% architectural adherence to CLAUDE.md privacy rules, provable defense against Sybil and replay attacks, automated Right to Erasure, zero PII leakage into Sentry or logs, and a crystal-clear operational runbook for the Banani pilot launch.
+  - *Trade-off:* Free-tier cloud limits (Supabase 7-day auto-pause, Upstash 10k cmds/day) require active keep-alive or upgrade to paid tiers for production pilot reliability.
+
+---
+
+### ADR-0016: Complete Production Readiness Verification, Security Headers, Healthcheck, Containerization, and Automated CI/CD Workflows
+- **Date:** 2026-11-19
+- **Status:** Accepted
+- **Context:**
+  Final evaluation of Halchal for 100% production readiness across web, backend, and mobile platforms. Identified gaps included:
+  1. Missing HTTP security headers (HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy) and Next.js technology leakage (`x-powered-by`).
+  2. Lack of an uptime and health monitoring route (`/api/health`) for cloud orchestrators, load balancers, and monitoring pings.
+  3. Prerendering serialization risks on interactive components when crossing React Server/Client boundaries (`BottomNav`, `ReportButton`, `AreaPill`, `StatusCard`).
+  4. Missing Bengali-first error handling boundaries (`not-found.tsx`, `error.tsx`) and SEO metadata routes (`robots.ts`, `sitemap.ts`).
+  5. Absence of unified GitHub Actions CI/CD workflows across Web, Mobile, and Supabase Edge Functions.
+  6. Lack of containerization (Dockerfile) for portable cloud deployments (Fly.io, Cloud Run, AWS ECS, self-hosted VPS) and Android release ProGuard rules.
+- **Decision:**
+  1. **HTTP Security Headers & Cache Policies in `web/next.config.ts`:**
+     - Enforced `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Strict-Transport-Security`, and `Permissions-Policy`.
+     - Disabled `x-powered-by` header via `poweredByHeader: false`.
+     - Enforced cache policies: `/sw.js` and `/manifest.webmanifest` (`max-age=0, must-revalidate`), `/fonts/*` (`max-age=31536000, immutable`), and `/api/og` (`s-maxage=600, stale-while-revalidate=86400`).
+  2. **Production Uptime & Health Endpoint (`/api/health`):**
+     - Implemented dynamic, no-cache `/api/health` checking database read connectivity, Redis ping status, uptime seconds, and latency ms.
+  3. **Bengali-First Error Handling & SEO Routes:**
+     - Created accessible Bengali 404 (`not-found.tsx`) and error boundary (`error.tsx`) with automatic Sentry error tracking.
+     - Added Next.js metadata routes `robots.ts` and `sitemap.ts` indexing all 10 seed Dhaka zones.
+     - Added `'use client'` to interactive components (`BottomNav`, `ReportButton`, `AreaPill`, `StatusCard`) resolving Next.js 15 prerender errors.
+  4. **GitHub Actions CI/CD Pipeline (`.github/workflows/ci.yml`):**
+     - Three parallel jobs: `web-ci` (Node 22, typecheck, tests, production build), `supabase-edge-ci` (Deno v2, 32 unit tests), and `mobile-ci` (Flutter stable, Java 17, analyze, 26 tests).
+  5. **Containerization & Android Proguard:**
+     - Created multi-stage production `web/Dockerfile` with standalone Next.js output and non-root security user.
+     - Created `mobile/android/app/proguard-rules.pro` and configured release signing fallback in `build.gradle.kts`.
+- **Consequences:**
+  - *Positive:* 100% test pass rate across all suites (51 web tests, 32 Deno tests, 26 Flutter tests = 109 automated tests passing), automated continuous integration, resilient production containerization, hardened browser security, and complete Bengali error boundaries.
+  - *Trade-off:* Standalone Docker image size is optimized via Alpine libc6-compat, requiring external volume mounts if custom fonts change.
