@@ -8,6 +8,9 @@ const __dirname = path.dirname(__filename);
 const nextConfig = {
   reactStrictMode: true,
   outputFileTracingRoot: __dirname,
+  outputFileTracingIncludes: {
+    '/api/og': ['./public/fonts/**/*'],
+  },
   serverExternalPackages: ['@resvg/resvg-js'],
   webpack: (config) => {
     config.resolve.alias['@'] = path.resolve(__dirname, 'src');

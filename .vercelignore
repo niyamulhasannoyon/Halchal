@@ -1,0 +1,11 @@
+# Mobile Flutter project (never deployed to Vercel)
+mobile/
+.dart_tool/
+.gradle/
+
+# Supabase local environment & tests
+supabase/.temp/
+supabase/tests/
+
+# Documentation
+docs/

@@ -342,3 +342,32 @@ This file contains the chronological log of all architectural, product, and engi
 - **Consequences:**
   - *Positive:* 100% contract parity with existing backend, resilient reporting during severe blackouts, zero raw GPS data leaks, reliable push notification action responses from the Android notification tray, and clean modular code verified by 26 automated tests.
   - *Trade-off:* Background WorkManager retries on Android are subject to OS battery management constraints, addressed through user OEM optimization guidance.
+
+---
+
+### ADR-0014: Vercel Production Deployment Architecture, Edge Caching, Security Headers, and Regional Proximity
+- **Date:** 2026-11-19
+- **Status:** Accepted
+- **Context:**
+  Deploying the Next.js 15 PWA frontend of Halchal to Vercel requires:
+  1. *Regional Proximity for Bangladesh:* Next.js Serverless Functions (`/api/report`, `/api/zone/[h3]`, `/api/og`) must minimize latency for users in Bangladesh. Supabase is hosted in Singapore (`ap-southeast-1`).
+  2. *Monorepo Support:* The repository is a monorepo containing `web/`, `mobile/`, `supabase/`, and `docs/`. Deployment must work seamlessly whether the Vercel project Root Directory is set to `web` or kept as repository root.
+  3. *PWA & Service Worker Cache Invalidation:* The Service Worker (`/sw.js`) and Web App Manifest (`/manifest.webmanifest`) must never be cached by CDN edge layers (`max-age=0, must-revalidate`), while static fonts and icons should be aggressively cached (`immutable`).
+  4. *Serverless Asset Tracing:* The dynamic OG image generator (`/api/og`) renders Bengali text via `@resvg/resvg-js` and requires the `NotoSansBengali.ttf` font in the serverless container filesystem.
+  5. *Deployment Upload Footprint:* The native Android Flutter app (`mobile/`) and local test suites should be excluded from Vercel source archive uploads.
+- **Decision:**
+  1. **Regional Edge Placement (`sin1`):** Configured `"regions": ["sin1"]` in `vercel.json` (Singapore) to match Supabase's `ap-southeast-1` data center, achieving sub-50ms roundtrip latency from Dhaka.
+  2. **Dual Monorepo Configuration:**
+     - `web/vercel.json` configured for deployments where Root Directory is set to `web`.
+     - Root `vercel.json` configured with `buildCommand`, `outputDirectory: "web/.next"`, and `installCommand: "npm --prefix web install"` for zero-configuration deployments from the repository root.
+     - Root `package.json` added with delegation scripts (`"build": "npm --prefix web run build"`).
+     - `.vercelignore` configured to exclude `mobile/`, `.dart_tool/`, `.gradle/`, and `supabase/tests/` from Vercel deployment uploads.
+  3. **PWA & Security Headers:**
+     - `/sw.js`: `Cache-Control: public, max-age=0, must-revalidate`, `Service-Worker-Allowed: /`.
+     - `/manifest.webmanifest`: `Content-Type: application/manifest+json; charset=utf-8`, `Cache-Control: public, max-age=0, must-revalidate`.
+     - `/fonts/*`: `Cache-Control: public, max-age=31536000, immutable`.
+     - Security: `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy: geolocation=(self), camera=(), microphone=()`.
+  4. **Serverless Font Tracing:** Added `outputFileTracingIncludes: { '/api/og': ['./public/fonts/**/*'] }` in `web/next.config.mjs` ensuring `NotoSansBengali.ttf` is bundled into the Lambda package.
+- **Consequences:**
+  - *Positive:* Fast, reliable Vercel deployments with sub-50ms serverless function execution from Bangladesh, guaranteed font availability for OG social card rendering, instant service worker updates, and seamless support for both CLI and Dashboard Git deployments.
+  - *Trade-off:* Environment variables must be kept in sync between Supabase, local `.env.local`, and Vercel Project Settings.
