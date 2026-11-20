@@ -40,10 +40,17 @@ jobs:
       - name: Verify Next.js Production Build
         run: npm run build
         env:
+          NEXT_PUBLIC_SITE_URL: https://halchal.bd
           NEXT_PUBLIC_APP_URL: https://halchal.bd
           NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
           NEXT_PUBLIC_SUPABASE_ANON_KEY: dummy-anon-key-for-ci-build
           HALCHAL_TEST_MODE: "true"
+
+      - name: Run Lighthouse CI Core Web Vitals Budget Check
+        run: npm run test:perf
+        env:
+          CHROME_PATH: /usr/bin/google-chrome
+          PERF_BASE_URL: http://localhost:3000
 
   supabase-edge-ci:
     name: Supabase Edge Functions (Deno)

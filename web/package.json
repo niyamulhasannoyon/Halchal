@@ -7,11 +7,16 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
+    "content:audit": "tsx ../scripts/check-stale-content.ts",
     "test": "node --import tsx --test src/lib/bengali-utils.test.ts src/lib/auth-trust.test.ts src/lib/bengali-shaping.test.ts src/lib/zones.test.ts src/lib/offline-queue.test.ts && vitest run",
     "test:vitest": "vitest run",
-    "test:e2e": "playwright test"
+    "test:perf": "node ../scripts/ci-perf-budget.mjs",
+    "analyze": "ANALYZE=true next build",
+    "test:e2e": "playwright test",
+    "test:smoke": "playwright test tests/e2e/smoke-20-urls.spec.ts"
   },
   "dependencies": {
+    "@next/bundle-analyzer": "^15.5.29",
     "@resvg/resvg-js": "^2.6.2",
     "@sentry/nextjs": "^11.15.0",
     "@supabase/supabase-js": "^2.119.2",
@@ -25,7 +30,8 @@
     "postcss": "^8.5.33",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
-    "tailwindcss": "^4.3.5"
+    "tailwindcss": "^4.3.5",
+    "web-vitals": "^4.2.4"
   },
   "devDependencies": {
     "@playwright/test": "^1.65.1",

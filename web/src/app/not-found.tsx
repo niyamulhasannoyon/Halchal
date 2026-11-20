@@ -1,6 +1,15 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { FileQuestion, Home, ArrowLeft } from 'lucide-react';
 import { BottomNav } from '@/components/BottomNav';
+
+export const metadata: Metadata = {
+  title: 'পাতাটি পাওয়া যায়নি',
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 export default function NotFound() {
   return (

@@ -12,6 +12,7 @@ import { ShareButton } from '@/components/ShareButton';
 import { OneTapReportSheet } from '@/components/OneTapReportSheet';
 import { PWAInstallBanner } from '@/components/PWAInstallBanner';
 import { PushNotificationOptInModal } from '@/components/PushNotificationOptInModal';
+import { SiteFooter } from '@/components/SiteFooter';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
@@ -98,14 +99,18 @@ export function ZoneViewClient({
               <ShareButton
                 h3Index={h3}
                 areaName={seedMeta.area_name_bn}
+                categories={categories}
               />
               <ThemeToggle variant="compact" />
             </div>
           </div>
         </header>
 
-        {/* Area Pill Card */}
+        {/* Area Pill Card & H1 Heading */}
         <div className="max-w-md mx-auto px-4 pt-3 pb-1">
+          <h1 className="text-lg sm:text-xl font-bold font-bengali text-[var(--text-main)] mb-2 tracking-tight">
+            {seedMeta.area_name_bn} এলাকার লাইভ ইউটিলিটি হালচাল
+          </h1>
           <AreaPill
             areaName={`${seedMeta.area_name_bn} (${seedMeta.ward})`}
             updatedAt={zoneStatus.updated_at}
@@ -186,6 +191,8 @@ export function ZoneViewClient({
 
       <PWAInstallBanner />
       <PushNotificationOptInModal />
+
+      <SiteFooter className="pb-16" />
 
       {/* Bottom Navigation */}
       <BottomNav

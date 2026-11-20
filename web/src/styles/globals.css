@@ -269,3 +269,9 @@ p, span, div, button, input {
   min-height: 48px;
   min-width: 48px;
 }
+
+/* Accessibility & Touch Target Minimums for MapLibre Controls (WCAG 2.5.5 / 2.5.8) */
+.maplibregl-ctrl button {
+  min-width: 44px !important;
+  min-height: 44px !important;
+}

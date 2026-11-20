@@ -71,7 +71,7 @@ export function StatusCard({
       tabIndex={onClick ? 0 : undefined}
       onClick={onClick}
       onKeyDown={onClick ? (e) => e.key === 'Enter' && onClick() : undefined}
-      aria-label={`${categoryMeta.nameBn} স্ট্যাটাস। আপডেট জানাতে ট্যাপ করুন।`}
+      aria-label={`${categoryMeta.nameBn} — স্ট্যাটাস ও আপডেট রিপোর্ট`}
       className={`group relative flex flex-col justify-between p-3.5 sm:p-4 rounded-2xl bg-[var(--surface-bg)] border border-[var(--surface-border)] hover:border-emerald-500/40 hover:shadow-md transition-all duration-200 min-h-[148px] shadow-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 cursor-pointer select-none active:scale-[0.98] ${className}`}
     >
       {/* Top Section: Category Header & Action Hint */}
@@ -79,9 +79,9 @@ export function StatusCard({
         <div className="flex items-center justify-between gap-1 mb-2">
           <div className="flex items-center gap-2 min-w-0">
             {renderCategoryIcon(category)}
-            <h3 className="font-bengali font-bold text-base sm:text-lg text-[var(--text-main)] leading-tight truncate">
+            <h2 className="font-bengali font-bold text-base sm:text-lg text-[var(--text-main)] leading-tight truncate">
               {categoryMeta.nameBn}
-            </h3>
+            </h2>
           </div>
           <span className="text-[var(--text-tertiary)] group-hover:text-emerald-500 group-hover:translate-x-0.5 transition-all text-xs font-semibold shrink-0" aria-hidden="true">
             ➔

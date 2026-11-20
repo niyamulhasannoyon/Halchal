@@ -7,9 +7,10 @@ import { toBengaliDigits } from '@/lib/bengali-utils';
 import { Zap, Flame, Droplet, Info } from 'lucide-react';
 
 interface InsightsHeatmapProps {
-  categories: Record<UtilityCategory, CategoryInsight>;
-  dataConfidence: 'ok' | 'insufficient';
+  categories?: Record<UtilityCategory, CategoryInsight>;
+  dataConfidence?: 'ok' | 'insufficient';
   areaNameBn: string;
+  hourlyHeatmap?: any;
 }
 
 const CATEGORY_TABS: { id: UtilityCategory; label: string; icon: typeof Zap }[] = [
@@ -38,7 +39,7 @@ export function InsightsHeatmap({
     block: HourlyBlock;
   } | null>(null);
 
-  const activeInsight = categories[activeCategory];
+  const activeInsight = categories ? categories[activeCategory] : undefined;
   const heatmapDays = activeInsight?.heatmap ?? [];
 
   // Helper to render cell styling and accessible pattern

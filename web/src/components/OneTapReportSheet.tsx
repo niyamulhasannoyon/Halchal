@@ -12,9 +12,10 @@ import { useAuth } from '@/context/AuthContext';
 interface OneTapReportSheetProps {
   isOpen: boolean;
   onClose: () => void;
-  areaName: string;
-  defaultLat: number;
-  defaultLng: number;
+  areaName?: string;
+  defaultLat?: number;
+  defaultLng?: number;
+  currentH3?: string;
   initialCategory?: UtilityCategory | null;
   onOptimisticReport: (
     category: UtilityCategory,
@@ -54,8 +55,8 @@ export function OneTapReportSheet({
 
   // Cached GPS coordinates
   const [coords, setCoords] = useState<{ lat: number; lng: number; accuracy: number }>({
-    lat: defaultLat,
-    lng: defaultLng,
+    lat: defaultLat ?? 23.746177,
+    lng: defaultLng ?? 90.373828,
     accuracy: 35,
   });
 
@@ -75,7 +76,7 @@ export function OneTapReportSheet({
       setSelectedCategory('electricity');
     }
 
-    setCoords({ lat: defaultLat, lng: defaultLng, accuracy: 35 });
+    setCoords({ lat: defaultLat ?? 23.746177, lng: defaultLng ?? 90.373828, accuracy: 35 });
 
     if (typeof navigator !== 'undefined' && 'geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(

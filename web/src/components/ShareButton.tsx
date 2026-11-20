@@ -2,10 +2,18 @@
 
 import React, { useState } from 'react';
 import { Share2, Check } from 'lucide-react';
+import { generateShareTextBn } from '@/lib/bengali-utils';
 
-interface ShareButtonProps {
+export interface ShareButtonProps {
   h3Index: string;
   areaName: string;
+  categories?: {
+    electricity?: { state: string };
+    gas?: { state: string };
+    water?: { state: string };
+    lpg?: { state: string };
+  };
+  customShareText?: string;
   className?: string;
   variant?: 'default' | 'compact';
 }
@@ -13,6 +21,8 @@ interface ShareButtonProps {
 export function ShareButton({
   h3Index,
   areaName,
+  categories,
+  customShareText,
   className = '',
   variant = 'compact',
 }: ShareButtonProps) {
@@ -24,7 +34,7 @@ export function ShareButton({
     const origin = typeof window !== 'undefined' ? window.location.origin : 'https://halchal.bd';
     const shareUrl = `${origin}/z/${h3Index}?t=${timeBucket}`;
     const shareTitle = `${areaName} এলাকার লাইভ হালচাল`;
-    const shareText = `${areaName} এলাকার কারেন্ট, গ্যাস ও পানির লাইভ খবর দেখুন হালচালে:`;
+    const shareText = customShareText || generateShareTextBn(areaName, categories);
 
     if (typeof navigator !== 'undefined' && navigator.share) {
       try {
@@ -39,7 +49,7 @@ export function ShareButton({
       }
     }
 
-    // Fallback: Copy to clipboard
+    // Fallback: Copy share URL (including time bucket) to clipboard
     try {
       await navigator.clipboard.writeText(shareUrl);
       setCopied(true);

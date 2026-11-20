@@ -1,0 +1,19 @@
+[
+  { "source": "/z/dhanmondi", "destination": "/dhaka/dhanmondi", "permanent": true },
+  { "source": "/z/mirpur-10", "destination": "/dhaka/mirpur-10", "permanent": true },
+  { "source": "/z/mirpur", "destination": "/dhaka/mirpur-10", "permanent": true },
+  { "source": "/z/gulshan-1", "destination": "/dhaka/gulshan-1", "permanent": true },
+  { "source": "/z/gulshan-2", "destination": "/dhaka/gulshan-2", "permanent": true },
+  { "source": "/z/gulshan", "destination": "/dhaka/gulshan-1", "permanent": true },
+  { "source": "/z/banani", "destination": "/dhaka/banani", "permanent": true },
+  { "source": "/z/uttara-sector-3", "destination": "/dhaka/uttara-sector-3", "permanent": true },
+  { "source": "/z/uttara", "destination": "/dhaka/uttara-sector-3", "permanent": true },
+  { "source": "/z/mohammadpur", "destination": "/dhaka/mohammadpur", "permanent": true },
+  { "source": "/z/farmgate", "destination": "/dhaka/farmgate", "permanent": true },
+  { "source": "/z/badda", "destination": "/dhaka/badda", "permanent": true },
+  { "source": "/z/lalbagh", "destination": "/dhaka/lalbagh", "permanent": true },
+  { "source": "/dhaka/mirpur", "destination": "/dhaka/mirpur-10", "permanent": true },
+  { "source": "/dhaka/gulshan", "destination": "/dhaka/gulshan-1", "permanent": true },
+  { "source": "/dhaka/uttara", "destination": "/dhaka/uttara-sector-3", "permanent": true },
+  { "source": "/zone/:slug*", "destination": "/dhaka/:slug*", "permanent": true }
+]

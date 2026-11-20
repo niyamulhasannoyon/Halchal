@@ -13,9 +13,9 @@ import * as h3 from 'h3-js';
 import {
   DHAKA_SEED_ZONES,
   getZoneMetadata,
-  getH3GeoJsonBoundary,
   SeedZone,
 } from '@/lib/zones';
+import { getH3GeoJsonBoundary } from '@/lib/h3-spatial';
 import { UtilityCategory, ZoneDisplayState } from '@/lib/theme';
 import { StateBadge } from './StateBadge';
 import Link from 'next/link';

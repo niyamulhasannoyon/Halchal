@@ -43,14 +43,10 @@ test.describe('Halchal PWA Core User Journey', () => {
     await expect(reportBtn).toBeVisible();
     await reportBtn.click();
 
-    // 8. OneTap Report Sheet: Step 1 Category Selection
+    // 8. OneTap Report Sheet: One-Tap State Selection
     const reportDialog = page.getByRole('dialog');
-    await expect(reportDialog.getByText('কিসের অবস্থা জানাবেন?')).toBeVisible();
-    const electricityCategoryBtn = reportDialog.getByRole('button', { name: /বিদ্যুৎ/ });
-    await electricityCategoryBtn.click();
+    await expect(reportDialog.getByText(/লাইভ অবস্থা জানান/)).toBeVisible();
 
-    // 9. OneTap Report Sheet: Step 2 State Selection
-    await expect(reportDialog.getByText(/বিদ্যুৎ.*অবস্থা কী/)).toBeVisible();
     const outStateBtn = reportDialog.getByRole('button', { name: /নেই \/ সম্পূর্ণ বন্ধ/ });
     await outStateBtn.click();
 
@@ -89,14 +85,14 @@ test.describe('Halchal PWA Core User Journey', () => {
       await page.getByRole('dialog').getByRole('button', { name: /ধানমন্ডি/ }).click();
     }
 
-    // Navigate to History stub route via BottomNav
-    const historyTab = page.getByRole('button', { name: 'ইতিহাস' });
+    // Navigate to History route via BottomNav
+    const historyTab = page.getByRole('link', { name: 'ইতিহাস' });
     await historyTab.click();
     await expect(page).toHaveURL(/.*\/history/);
-    await expect(page.getByText('৭ দিনের ইনসাইটস ফিচার শীঘ্রই আসছে')).toBeVisible();
+    await expect(page.getByText('৭ দিনের ইতিহাস')).toBeVisible();
 
     // Navigate to Live Map route via BottomNav
-    const mapTab = page.getByRole('button', { name: 'লাইভ ম্যাপ' });
+    const mapTab = page.getByRole('link', { name: 'লাইভ ম্যাপ' });
     await mapTab.click();
     await expect(page).toHaveURL(/.*\/map/);
   });

@@ -1,6 +1,6 @@
 import React from 'react';
 import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
+import { notFound, permanentRedirect } from 'next/navigation';
 import {
   isValidH3Zone,
   getZoneMetadata,
@@ -10,6 +10,11 @@ import {
 } from '@/lib/zones';
 import { getCachedZoneStatus } from '@/lib/redis';
 import { getSupabaseServerClient } from '@/lib/supabase';
+import { buildMetadata, shouldIndexZone } from '@/lib/seo';
+import { getAreaByH3 } from '@/lib/areas';
+import { SEED_ZONE_METRICS } from '@/app/sitemap';
+import { siteConfig } from '@/config/site';
+import { BreadcrumbJsonLd, WebPageJsonLd } from '@/components/seo/JsonLd';
 import { ZoneViewClient } from './ZoneViewClient';
 
 export const revalidate = 60; // ISR revalidate every 60s
@@ -18,57 +23,46 @@ interface ZonePageProps {
   params: Promise<{
     h3: string;
   }>;
-  searchParams: Promise<{
-    t?: string;
-  }>;
 }
 
 export async function generateMetadata({
   params,
-  searchParams,
 }: ZonePageProps): Promise<Metadata> {
   const { h3 } = await params;
-  const { t } = await searchParams;
+  const cleanH3 = (h3 || '').toLowerCase();
 
-  if (!isValidH3Zone(h3)) {
-    return {
-      title: 'এলাকা পাওয়া যায়নি — হালচাল',
-    };
+  if (!isValidH3Zone(cleanH3)) {
+    return buildMetadata({
+      title: 'এলাকা পাওয়া যায়নি',
+      description: 'অনুরোধকৃত এলাকাটি হালচালে পাওয়া যায়নি। এলাকাটি নির্বাচন করতে প্রধান পাতায় যান।',
+      path: `/z/${cleanH3}`,
+      noindex: true,
+    });
   }
 
-  const meta = getZoneMetadata(h3);
+  const meta = getZoneMetadata(cleanH3);
   const areaName = meta?.area_name_bn || 'ঢাকা এলাকা';
-  const timeBucket = t || String(Math.floor(Date.now() / 600000));
-  const ogImageUrl = `/api/og?h3=${h3}&t=${timeBucket}`;
 
-  const title = `${areaName} এলাকার হালচাল — লাইভ ইউটিলিটি খবর`;
-  const description = `${areaName} এলাকার বিদ্যুৎ, গ্যাস, পানি এবং এলপিজি সিলিন্ডারের লাইভ খবর। নাগরিকদের তথ্যের ভিত্তিতে তৈরি।`;
+  // Check if zone meets crowd-sourced indexing threshold
+  const metrics = SEED_ZONE_METRICS[cleanH3];
+  const isIndexable = shouldIndexZone(metrics);
 
-  return {
+  const title = `${areaName} এলাকার হালচাল`;
+  const description = `${areaName} এলাকার বিদ্যুৎ, গ্যাস, পানি এবং এলপিজি সিলিন্ডারের সর্বশেষ লাইভ স্ট্যাটাস। নাগরিকদের তথ্যের ভিত্তিতে তৈরি হালচাল।`;
+
+  const matchingArea = getAreaByH3(cleanH3);
+  const canonicalPath = matchingArea
+    ? `/${matchingArea.citySlug}/${matchingArea.slug}`
+    : `/z/${cleanH3}`;
+
+  return buildMetadata({
     title,
     description,
-    openGraph: {
-      title,
-      description,
-      type: 'website',
-      locale: 'bn_BD',
-      url: `/z/${h3}?t=${timeBucket}`,
-      images: [
-        {
-          url: ogImageUrl,
-          width: 1200,
-          height: 630,
-          alt: `${areaName} এলাকার লাইভ ইউটিলিটি স্ট্যাটাস কার্ড`,
-        },
-      ],
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title,
-      description,
-      images: [ogImageUrl],
-    },
-  };
+    path: `/z/${cleanH3}`,
+    canonicalPath,
+    ogImage: `/api/og?h3=${cleanH3}`,
+    noindex: !isIndexable,
+  });
 }
 
 export async function generateStaticParams() {
@@ -79,6 +73,11 @@ export async function generateStaticParams() {
 
 export default async function ZonePage({ params }: ZonePageProps) {
   const { h3 } = await params;
+
+  // Enforce lowercase H3 URL canonicalization via 301 permanent redirect
+  if (h3 !== h3.toLowerCase()) {
+    permanentRedirect(`/z/${h3.toLowerCase()}`);
+  }
 
   if (!isValidH3Zone(h3)) {
     notFound();
@@ -119,11 +118,33 @@ export default async function ZonePage({ params }: ZonePageProps) {
     statusData = createDefaultZoneStatus(h3);
   }
 
+  const cleanH3 = h3.toLowerCase();
+  const breadcrumbItems = [
+    { name: 'হোম', url: siteConfig.url },
+    { name: 'ঢাকা', url: `${siteConfig.url}/map` },
+    {
+      name: `${areaName}${meta?.ward ? ` (${meta.ward})` : ''}`,
+      url: `${siteConfig.url}/z/${cleanH3}`,
+    },
+  ];
+
   return (
-    <ZoneViewClient
-      h3={h3}
-      initialStatus={statusData}
-      seedMeta={meta || DHAKA_SEED_ZONES[0]}
-    />
+    <>
+      <BreadcrumbJsonLd
+        items={breadcrumbItems}
+        canonicalUrl={`${siteConfig.url}/z/${cleanH3}`}
+      />
+      <WebPageJsonLd
+        title={`${areaName} এলাকার হালচাল`}
+        description={`${areaName} এলাকার বিদ্যুৎ, গ্যাস, পানি এবং এলপিজি সিলিন্ডারের সর্বশেষ লাইভ স্ট্যাটাস। নাগরিকদের তথ্যের ভিত্তিতে তৈরি হালচাল।`}
+        pathOrUrl={`/z/${cleanH3}`}
+        dateModified={statusData.updated_at}
+      />
+      <ZoneViewClient
+        h3={h3}
+        initialStatus={statusData}
+        seedMeta={meta || DHAKA_SEED_ZONES[0]}
+      />
+    </>
   );
 }

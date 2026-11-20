@@ -1,0 +1,165 @@
+name: Weekly SEO & Core Web Vitals Monitoring
+
+on:
+  schedule:
+    # Run every Monday at 06:00 UTC (12:00 PM BST)
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+    inputs:
+      target_url:
+        description: 'Target URL to monitor (leave empty to test local production build)'
+        required: false
+        default: ''
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  seo-crawler-and-lighthouse:
+    name: SEO Crawler & Lighthouse Audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install Dependencies
+        working-directory: web
+        run: npm ci
+
+      - name: Install Playwright Browsers (Chromium)
+        working-directory: web
+        run: npx playwright install --with-deps chromium
+
+      - name: Build Next.js Production App
+        working-directory: web
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SITE_URL: http://localhost:3000
+          NEXT_PUBLIC_APP_URL: http://localhost:3000
+          NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: dummy-anon-key-for-monitoring-build
+          HALCHAL_TEST_MODE: 'true'
+
+      - name: Start Production Server in Background
+        id: server
+        working-directory: web
+        run: |
+          npm run start -- -p 3000 &
+          echo "SERVER_PID=$!" >> $GITHUB_ENV
+          npx wait-on -t 30000 http://localhost:3000
+        env:
+          HALCHAL_TEST_MODE: 'true'
+          NEXT_PUBLIC_SITE_URL: http://localhost:3000
+
+      - name: Create Reports Directory
+        run: mkdir -p reports
+
+      - name: Step 1 - Run Production Environment Check
+        id: env_check
+        continue-on-error: true
+        run: |
+          TARGET="${{ github.event.inputs.target_url || 'http://localhost:3000' }}"
+          node scripts/check-production-env.mjs --url "$TARGET"
+
+      - name: Step 2 - Run Broken-Link & Redirect-Chain Crawler
+        id: crawler
+        continue-on-error: true
+        run: |
+          TARGET="${{ github.event.inputs.target_url || 'http://localhost:3000' }}"
+          node scripts/crawl-sitemap-links.mjs --url "$TARGET" --out ./reports/crawl-results.csv
+
+      - name: Step 3 - Run Lighthouse CI Core Web Vitals Budget Check
+        id: lighthouse
+        continue-on-error: true
+        run: |
+          TARGET="${{ github.event.inputs.target_url || 'http://localhost:3000' }}"
+          export CHROME_PATH=/usr/bin/google-chrome
+          export PERF_BASE_URL="$TARGET"
+          node scripts/ci-perf-budget.mjs
+
+      - name: Step 4 - Run Playwright Post-Deploy 20+ URLs Smoke Suite
+        id: smoke
+        continue-on-error: true
+        working-directory: web
+        run: npm run test:smoke
+
+      - name: Stop Background Server
+        if: always()
+        run: |
+          if [ -n "$SERVER_PID" ]; then
+            kill "$SERVER_PID" 2>/dev/null || true
+          fi
+
+      - name: Upload Crawler CSV & Lighthouse Artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: seo-monitoring-reports-${{ github.run_number }}
+          path: |
+            reports/crawl-results.csv
+            .perf-ci-tmp/
+            web/test-results/
+          retention-days: 30
+
+      - name: Open GitHub Issue on Regression or Failure
+        if: steps.env_check.outcome == 'failure' || steps.crawler.outcome == 'failure' || steps.lighthouse.outcome == 'failure' || steps.smoke.outcome == 'failure'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const envCheckPassed = '${{ steps.env_check.outcome }}' === 'success';
+            const crawlerPassed = '${{ steps.crawler.outcome }}' === 'success';
+            const lighthousePassed = '${{ steps.lighthouse.outcome }}' === 'success';
+            const smokePassed = '${{ steps.smoke.outcome }}' === 'success';
+
+            const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+
+            const issueBody = `## 🚨 SEO & Core Web Vitals Weekly Monitoring Alert
+
+The weekly automated SEO monitoring pipeline detected regressions or failures during its scheduled run on **${new Date().toUTCString()}**.
+
+### Summary of Audit Stages:
+| Audit Stage | Status | Description |
+| :--- | :--- | :--- |
+| **Environment Check** | ${envCheckPassed ? '✅ PASS' : '❌ FAIL'} | Protocol, HSTS, robots.txt, and sitemap reachability |
+| **Broken Link Crawler** | ${crawlerPassed ? '✅ PASS' : '❌ FAIL'} | Sitemap-driven internal/external links and redirect chains |
+| **Lighthouse CI CWV** | ${lighthousePassed ? '✅ PASS' : '❌ FAIL'} | Core Web Vitals (LCP, CLS, TBT), A11y, and SEO budget scores |
+| **20+ URLs Smoke Test** | ${smokePassed ? '✅ PASS' : '❌ FAIL'} | Status 200, canonical tags, H1s, titles, JSON-LD, OG images |
+
+### Action Required:
+1. Review the detailed log output in the [GitHub Actions Run](${runUrl}).
+2. Download the attached \`crawl-results.csv\` artifact to inspect any 404 broken links or redirect loops.
+3. Review Lighthouse score changes in \`.perf-ci-tmp/\` to identify bundle size or render blocking regressions.
+4. Resolve regressions and verify with:
+   \`\`\`bash
+   node scripts/crawl-sitemap-links.mjs
+   node scripts/ci-perf-budget.mjs
+   npm run test:smoke -w web
+   \`\`\`
+
+*Automated notification generated by \`.github/workflows/seo-monitoring.yml\`.*`;
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🚨 [SEO Alert] Weekly SEO & Core Web Vitals Monitoring Regressions Detected (Run #${context.runNumber})`,
+              body: issueBody,
+              labels: ['seo', 'automated-monitoring', 'bug'],
+            });
+
+      - name: Gatekeeper Final Verdict
+        if: steps.env_check.outcome == 'failure' || steps.crawler.outcome == 'failure' || steps.lighthouse.outcome == 'failure' || steps.smoke.outcome == 'failure'
+        run: |
+          echo "::error::One or more SEO monitoring checks failed. Review artifacts and the opened GitHub issue."
+          exit 1

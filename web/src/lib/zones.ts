@@ -4,7 +4,6 @@
  * Architecture: ADR-0001, ADR-0003, ADR-0008
  */
 
-import * as h3 from 'h3-js';
 import { UtilityCategory, ZoneDisplayState } from './theme';
 
 export interface ZoneCategoryStatus {
@@ -30,6 +29,7 @@ export interface ZoneStatusResponse {
 
 export interface SeedZone {
   h3_index: string;
+  slug: string;
   area_name_bn: string;
   ward: string;
   city: string;
@@ -39,11 +39,12 @@ export interface SeedZone {
 
 /**
  * 10 authentic Dhaka Uber H3 Resolution 8 zones seeded in Postgres
- * Migration: 20261119000004_seed_dhaka_zones.sql
+ * Migration: 20261119000004_seed_dhaka_zones.sql, 20261120000008_add_zone_slugs_and_redirects.sql
  */
 export const DHAKA_SEED_ZONES: SeedZone[] = [
   {
     h3_index: '883cf10ca1fffff',
+    slug: 'dhanmondi',
     area_name_bn: 'ধানমন্ডি',
     ward: 'ওয়ার্ড ১৫',
     city: 'ঢাকা',
@@ -52,6 +53,7 @@ export const DHAKA_SEED_ZONES: SeedZone[] = [
   },
   {
     h3_index: '883cf10eb1fffff',
+    slug: 'mirpur-10',
     area_name_bn: 'মিরপুর ১০',
     ward: 'ওয়ার্ড ১৪',
     city: 'ঢাকা',
@@ -60,6 +62,7 @@ export const DHAKA_SEED_ZONES: SeedZone[] = [
   },
   {
     h3_index: '883cf10c93fffff',
+    slug: 'gulshan-1',
     area_name_bn: 'গুলশান ১',
     ward: 'ওয়ার্ড ১৯',
     city: 'ঢাকা',
@@ -68,6 +71,7 @@ export const DHAKA_SEED_ZONES: SeedZone[] = [
   },
   {
     h3_index: '883cf13b27fffff',
+    slug: 'gulshan-2',
     area_name_bn: 'গুলশান ২',
     ward: 'ওয়ার্ড ১৮',
     city: 'ঢাকা',
@@ -76,6 +80,7 @@ export const DHAKA_SEED_ZONES: SeedZone[] = [
   },
   {
     h3_index: '883cf13b25fffff',
+    slug: 'banani',
     area_name_bn: 'বনানী',
     ward: 'ওয়ার্ড ১৯',
     city: 'ঢাকা',
@@ -84,6 +89,7 @@ export const DHAKA_SEED_ZONES: SeedZone[] = [
   },
   {
     h3_index: '883cf10583fffff',
+    slug: 'uttara-sector-3',
     area_name_bn: 'উত্তরা সেক্টর ৩',
     ward: 'ওয়ার্ড ১',
     city: 'ঢাকা',
@@ -92,6 +98,7 @@ export const DHAKA_SEED_ZONES: SeedZone[] = [
   },
   {
     h3_index: '883cf10cebfffff',
+    slug: 'mohammadpur',
     area_name_bn: 'মোহাম্মদপুর',
     ward: 'ওয়ার্ড ৩১',
     city: 'ঢাকা',
@@ -100,6 +107,7 @@ export const DHAKA_SEED_ZONES: SeedZone[] = [
   },
   {
     h3_index: '883cf10cbdfffff',
+    slug: 'farmgate',
     area_name_bn: 'ফার্মগেট',
     ward: 'ওয়ার্ড ২৬',
     city: 'ঢাকা',
@@ -108,6 +116,7 @@ export const DHAKA_SEED_ZONES: SeedZone[] = [
   },
   {
     h3_index: '883cf13941fffff',
+    slug: 'badda',
     area_name_bn: 'বাড্ডা',
     ward: 'ওয়ার্ড ২১',
     city: 'ঢাকা',
@@ -116,6 +125,7 @@ export const DHAKA_SEED_ZONES: SeedZone[] = [
   },
   {
     h3_index: '883cf1766bfffff',
+    slug: 'lalbagh',
     area_name_bn: 'লালবাগ',
     ward: 'ওয়ার্ড ২৪',
     city: 'ঢাকা',
@@ -149,14 +159,11 @@ export function setStoredHomeZone(h3Index: string): void {
 
 /**
  * Validates whether a string is a valid H3 Resolution 8 index
+ * Fast pattern check (15 hex characters starting with 88) avoiding h3-js import in client bundles
  */
 export function isValidH3Zone(h3Index: string | null | undefined): boolean {
   if (!h3Index || typeof h3Index !== 'string') return false;
-  try {
-    return h3.isValidCell(h3Index) && h3.getResolution(h3Index) === 8;
-  } catch {
-    return false;
-  }
+  return /^88[0-9a-fA-F]{13}$/.test(h3Index);
 }
 
 /**
@@ -164,31 +171,6 @@ export function isValidH3Zone(h3Index: string | null | undefined): boolean {
  */
 export function getZoneMetadata(h3Index: string): SeedZone | null {
   return DHAKA_SEED_ZONES.find((z) => z.h3_index === h3Index) ?? null;
-}
-
-/**
- * Converts GPS coordinates into H3 Resolution 8 cell index
- */
-export function latLngToH3(lat: number, lng: number): string {
-  return h3.latLngToCell(lat, lng, 8);
-}
-
-/**
- * Computes boundary coordinates in GeoJSON format `[[lng, lat], ...]`
- */
-export function getH3GeoJsonBoundary(h3Index: string): [number, number][] {
-  const boundary = h3.cellToBoundary(h3Index);
-  // cellToBoundary returns [[lat, lng], ...], GeoJSON expects [[lng, lat], ...]
-  const geoJsonCoords = boundary.map(([lat, lng]) => [lng, lat] as [number, number]);
-  // Close the polygon ring if not closed
-  if (geoJsonCoords.length > 0) {
-    const first = geoJsonCoords[0];
-    const last = geoJsonCoords[geoJsonCoords.length - 1];
-    if (first[0] !== last[0] || first[1] !== last[1]) {
-      geoJsonCoords.push([...first]);
-    }
-  }
-  return geoJsonCoords;
 }
 
 /**

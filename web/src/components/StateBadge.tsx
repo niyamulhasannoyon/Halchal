@@ -1,8 +1,9 @@
 import React from 'react';
-import { ZoneDisplayState, STATE_CONFIGS } from '@/lib/theme';
+import { ZoneDisplayState, STATE_CONFIGS, UtilityCategory } from '@/lib/theme';
 
 interface StateBadgeProps {
   state: ZoneDisplayState;
+  category?: UtilityCategory | string;
   size?: 'sm' | 'md' | 'lg';
   className?: string;
   showIcon?: boolean;

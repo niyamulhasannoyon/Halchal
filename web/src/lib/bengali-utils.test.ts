@@ -6,6 +6,8 @@ import {
   normalizeBangladeshiPhone,
   formatRelativeTimeBn,
   formatReporterCountBn,
+  getBengaliLocative,
+  generateShareTextBn,
 } from './bengali-utils';
 
 describe('toBengaliDigits', () => {
@@ -151,5 +153,50 @@ describe('normalizeBangladeshiPhone', () => {
     assert.equal(normalizeBangladeshiPhone('0171234567899').isValid, false); // too long
     assert.equal(normalizeBangladeshiPhone('').isValid, false);
     assert.equal(normalizeBangladeshiPhone(null).isValid, false);
+  });
+});
+
+describe('getBengaliLocative & generateShareTextBn (Bengali Share Phrasing)', () => {
+  it('generates authentic Bengali locative forms for key Dhaka areas', () => {
+    assert.equal(getBengaliLocative('মোহাম্মদপুর'), 'মোহাম্মদপুরে');
+    assert.equal(getBengaliLocative('ধানমন্ডি'), 'ধানমন্ডিতে');
+    assert.equal(getBengaliLocative('মিরপুর ১০'), 'মিরপুর ১০-এ');
+    assert.equal(getBengaliLocative('বনানী'), 'বনানীতে');
+    assert.equal(getBengaliLocative('গুলশান ১'), 'গুলশান ১-এ');
+    assert.equal(getBengaliLocative('গুলশান ২'), 'গুলশান ২-এ');
+    assert.equal(getBengaliLocative('ফার্মগেট'), 'ফার্মগেটে');
+    assert.equal(getBengaliLocative('বাড্ডা'), 'বাড্ডায়');
+    assert.equal(getBengaliLocative('লালবাগ'), 'লালবাগে');
+    assert.equal(getBengaliLocative('উত্তরা সেক্টর ৩'), 'উত্তরা সেক্টর ৩-এ');
+  });
+
+  it('pre-fills share text in Bengali prioritizing active outages (e.g. gas out in Mohammadpur)', () => {
+    const text = generateShareTextBn('মোহাম্মদপুর', {
+      gas: { state: 'out' },
+      electricity: { state: 'ok' },
+    });
+    assert.equal(text, 'মোহাম্মদপুরে এখন গ্যাস নেই, আপনার এলাকার হাল জানান:');
+  });
+
+  it('pre-fills share text in Bengali for electricity outage', () => {
+    const text = generateShareTextBn('ধানমন্ডি', {
+      gas: { state: 'ok' },
+      electricity: { state: 'out' },
+    });
+    assert.equal(text, 'ধানমন্ডিতে এখন বিদ্যুৎ নেই, আপনার এলাকার হাল জানান:');
+  });
+
+  it('pre-fills share text in Bengali when everything is ok', () => {
+    const text = generateShareTextBn('বনানী', {
+      gas: { state: 'ok' },
+      electricity: { state: 'ok' },
+      water: { state: 'ok' },
+    });
+    assert.equal(text, 'বনানীতে এখন বিদ্যুৎ, গ্যাস ও পানি স্বাভাবিক, আপনার এলাকার হাল জানান:');
+  });
+
+  it('provides safe default share text when no category data is provided', () => {
+    const text = generateShareTextBn('বাড্ডা');
+    assert.equal(text, 'বাড্ডায় কারেন্ট, গ্যাস ও পানির লাইভ খবর জানুন এবং আপনার এলাকার হাল জানান:');
   });
 });

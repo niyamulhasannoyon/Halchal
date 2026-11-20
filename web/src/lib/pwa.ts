@@ -17,26 +17,40 @@ export function registerServiceWorker(): void {
     return;
   }
 
-  window.addEventListener('load', () => {
-    navigator.serviceWorker
-      .register('/sw.js')
-      .then((reg) => {
-        // Listen for updates
-        reg.addEventListener('updatefound', () => {
-          const installingWorker = reg.installing;
-          if (installingWorker) {
-            installingWorker.addEventListener('statechange', () => {
-              if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                // New update available
-              }
-            });
-          }
+  const register = () => {
+    const doRegister = () => {
+      navigator.serviceWorker
+        .register('/sw.js')
+        .then((reg) => {
+          // Listen for updates
+          reg.addEventListener('updatefound', () => {
+            const installingWorker = reg.installing;
+            if (installingWorker) {
+              installingWorker.addEventListener('statechange', () => {
+                if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  // New update available
+                }
+              });
+            }
+          });
+        })
+        .catch((err) => {
+          console.warn('ServiceWorker registration error:', err);
         });
-      })
-      .catch((err) => {
-        console.warn('ServiceWorker registration error:', err);
-      });
-  });
+    };
+
+    if ('requestIdleCallback' in window) {
+      (window as unknown as { requestIdleCallback: (cb: () => void) => void }).requestIdleCallback(doRegister);
+    } else {
+      setTimeout(doRegister, 1000);
+    }
+  };
+
+  if (document.readyState === 'complete') {
+    register();
+  } else {
+    window.addEventListener('load', register, { once: true });
+  }
 
   // Capture beforeinstallprompt event without showing automatic banner
   window.addEventListener('beforeinstallprompt', (e) => {

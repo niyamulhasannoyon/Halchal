@@ -23,7 +23,7 @@ export function ReportButton({
       onClick={onClick}
       disabled={disabled || isLoading}
       aria-busy={isLoading}
-      className={`w-full group relative flex items-center justify-center gap-3 px-6 py-3.5 min-h-[54px] rounded-2xl font-bengali font-bold text-base md:text-lg text-white shadow-lg transition-all duration-150 select-none cursor-pointer focus:outline-none focus-visible:ring-4 focus-visible:ring-emerald-500/50 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-500 dark:active:bg-emerald-700 ${className}`}
+      className={`w-full group relative flex items-center justify-center gap-3 px-6 py-3.5 min-h-[54px] rounded-2xl font-bengali font-bold text-base md:text-lg text-white shadow-lg transition-all duration-150 select-none cursor-pointer focus:outline-none focus-visible:ring-4 focus-visible:ring-emerald-500/50 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 bg-emerald-700 hover:bg-emerald-600 active:bg-emerald-800 dark:bg-emerald-700 dark:hover:bg-emerald-600 dark:active:bg-emerald-800 ${className}`}
     >
       {isLoading ? (
         <svg

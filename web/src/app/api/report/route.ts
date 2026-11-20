@@ -8,7 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServerClient, getSupabaseServiceClient } from '@/lib/supabase';
 import { invalidateCachedZoneStatus } from '@/lib/redis';
-import { latLngToH3, isValidH3Zone } from '@/lib/zones';
+import { latLngToH3, isValidH3Zone } from '@/lib/h3-spatial';
 
 const SUPABASE_URL =
   process.env.NEXT_PUBLIC_SUPABASE_URL ||

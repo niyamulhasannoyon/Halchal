@@ -54,6 +54,7 @@ export interface Zone7DayInsights {
   insight_bn: string;
   generated_at: string;
   cached?: boolean;
+  hourly_heatmap?: any;
 }
 
 export const INSUFFICIENT_DATA_BN = 'এখনো পর্যাপ্ত তথ্য নেই (কমপক্ষে ৩ দিনের রিপোর্ট লাগবে)।';

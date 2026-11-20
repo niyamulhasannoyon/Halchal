@@ -191,3 +191,98 @@ export function formatReporterCountBn(
 
   return `${bnCount} জন বলছেন, এখনো নিশ্চিত নয়`;
 }
+
+/**
+ * Known locative forms for key Dhaka areas to ensure natural Bengali grammar.
+ * (e.g. মোহাম্মদপুর -> মোহাম্মদপুরে, ধানমন্ডি -> ধানমন্ডিতে, বাড্ডা -> বাড্ডায়)
+ */
+const KNOWN_AREA_LOCATIVES: Record<string, string> = {
+  'মোহাম্মদপুর': 'মোহাম্মদপুরে',
+  'ধানমন্ডি': 'ধানমন্ডিতে',
+  'মিরপুর ১০': 'মিরপুর ১০-এ',
+  'মিরপুর': 'মিরপুরে',
+  'গুলশান ১': 'গুলশান ১-এ',
+  'গুলশান ২': 'গুলশান ২-এ',
+  'গুলশান': 'গুলশানে',
+  'বনানী': 'বনানীতে',
+  'উত্তরা সেক্টর ৩': 'উত্তরা সেক্টর ৩-এ',
+  'উত্তরা': 'উত্তরায়',
+  'ফার্মগেট': 'ফার্মগেটে',
+  'বাড্ডা': 'বাড্ডায়',
+  'লালবাগ': 'লালবাগে',
+  'ঢাকা': 'ঢাকায়',
+};
+
+/**
+ * Returns natural Bengali locative (সপ্তমী বিভক্তি) form for an area name.
+ * e.g. "মোহাম্মদপুর" -> "মোহাম্মদপুরে", "ধানমন্ডি" -> "ধানমন্ডিতে", "বাড্ডা" -> "বাড্ডায়"
+ */
+export function getBengaliLocative(areaName: string): string {
+  if (!areaName) return 'আপনার এলাকায়';
+  const trimmed = areaName.trim();
+  if (KNOWN_AREA_LOCATIVES[trimmed]) {
+    return KNOWN_AREA_LOCATIVES[trimmed];
+  }
+
+  // Generic heuristic for Bengali nouns:
+  // If ends with 'া' (aa-kar) -> append 'য়' (e.g. বাড্ডা -> বাড্ডায়)
+  if (trimmed.endsWith('া')) {
+    return `${trimmed}য়`;
+  }
+  // If ends with 'ি' or 'ী' (i-kar / ee-kar) or 'ু' or 'ূ' -> append 'তে' (e.g. রূপনগরী -> রূপনগরীতে)
+  if (trimmed.endsWith('ি') || trimmed.endsWith('ী') || trimmed.endsWith('ু') || trimmed.endsWith('ূ')) {
+    return `${trimmed}তে`;
+  }
+  // If ends with a digit (০-৯ or 0-9) -> append '-এ'
+  if (/[\d০-৯]$/.test(trimmed)) {
+    return `${trimmed}-এ`;
+  }
+  // If ends with consonant (including র্) -> append 'ে' (e.g. তেজগাঁও -> তেজগাঁওয়ে / মিরপুর -> মিরপুরে)
+  return `${trimmed}ে`;
+}
+
+/**
+ * Generates an authentic Bengali share message highlighting utility state or outage.
+ * e.g. "মোহাম্মদপুরে এখন গ্যাস নেই, আপনার এলাকার হাল জানান:"
+ */
+export function generateShareTextBn(
+  areaName: string,
+  categories?: {
+    electricity?: { state: string };
+    gas?: { state: string };
+    water?: { state: string };
+    lpg?: { state: string };
+  }
+): string {
+  const locative = getBengaliLocative(areaName);
+
+  if (categories) {
+    if (categories.gas?.state === 'out') {
+      return `${locative} এখন গ্যাস নেই, আপনার এলাকার হাল জানান:`;
+    }
+    if (categories.electricity?.state === 'out') {
+      return `${locative} এখন বিদ্যুৎ নেই, আপনার এলাকার হাল জানান:`;
+    }
+    if (categories.water?.state === 'out') {
+      return `${locative} এখন পানি নেই, আপনার এলাকার হাল জানান:`;
+    }
+    if (categories.gas?.state === 'low') {
+      return `${locative} এখন গ্যাসের চাপ কম, আপনার এলাকার হাল জানান:`;
+    }
+    if (categories.electricity?.state === 'low') {
+      return `${locative} এখন বিদ্যুৎ বিভ্রাট, আপনার এলাকার হাল জানান:`;
+    }
+    if (categories.water?.state === 'low') {
+      return `${locative} এখন পানির চাপ কম, আপনার এলাকার হাল জানান:`;
+    }
+    if (
+      categories.electricity?.state === 'ok' &&
+      categories.gas?.state === 'ok' &&
+      categories.water?.state === 'ok'
+    ) {
+      return `${locative} এখন বিদ্যুৎ, গ্যাস ও পানি স্বাভাবিক, আপনার এলাকার হাল জানান:`;
+    }
+  }
+
+  return `${locative} কারেন্ট, গ্যাস ও পানির লাইভ খবর জানুন এবং আপনার এলাকার হাল জানান:`;
+}

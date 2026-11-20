@@ -29,7 +29,7 @@ export function AreaPill({
         type="button"
         onClick={onAreaClick}
         className="flex items-center gap-2.5 text-left group rounded-xl hover:opacity-90 transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 cursor-pointer min-w-0"
-        aria-label={`বর্তমান এলাকা: ${areaName}। পরিবর্তনের জন্য চাপুন।`}
+        aria-label={`${areaName} — এলাকা পরিবর্তন করতে চাপুন`}
       >
         <span className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 flex items-center justify-center text-base shrink-0 group-hover:scale-105 transition-transform">
           📍

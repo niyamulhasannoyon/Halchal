@@ -4,11 +4,10 @@ import {
   DHAKA_SEED_ZONES,
   isValidH3Zone,
   getZoneMetadata,
-  latLngToH3,
-  getH3GeoJsonBoundary,
   findNearestZone,
   createDefaultZoneStatus,
 } from './zones';
+import { latLngToH3, getH3GeoJsonBoundary } from './h3-spatial';
 
 describe('Halchal Zones and H3 Spatial Unit Tests', () => {
   it('contains exactly 10 authentic Dhaka seed zones', () => {

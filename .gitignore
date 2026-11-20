@@ -34,6 +34,14 @@ Thumbs.db
 *.tsbuildinfo
 test-results/
 playwright-report/
+.perf-ci-tmp/
+reports/
+baseline-reports/
+optimized-reports/
+benchmark-summary.json
+optimized-summary.json
+baseline-home.json
+crawl-results.csv
 
 # Supabase Local
 .supabase/

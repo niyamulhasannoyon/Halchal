@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 
 export type NavTab = 'status' | 'map' | 'history';
@@ -90,11 +91,18 @@ export function BottomNav({
       <div className="max-w-md mx-auto grid grid-cols-3 gap-1">
         {tabs.map((tab) => {
           const isActive = currentActiveTab === tab.id;
+          const href = tab.id === 'status' ? '/' : tab.id === 'map' ? '/map' : '/history';
+
           return (
-            <button
+            <Link
               key={tab.id}
-              type="button"
-              onClick={() => handleTabClick(tab.id)}
+              href={href}
+              onClick={(e) => {
+                if (onTabChange) {
+                  e.preventDefault();
+                  onTabChange(tab.id);
+                }
+              }}
               aria-current={isActive ? 'page' : undefined}
               className={`flex flex-col items-center justify-center py-2 px-2 rounded-xl transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 cursor-pointer select-none active:scale-95 ${
                 isActive
@@ -108,7 +116,7 @@ export function BottomNav({
               <span className="font-bengali text-xs mt-1 leading-tight">
                 {tab.label}
               </span>
-            </button>
+            </Link>
           );
         })}
       </div>

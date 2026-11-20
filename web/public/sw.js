@@ -4,17 +4,15 @@
  * Caches app shell, static assets, and last known zone status.
  */
 
-const CACHE_NAME = 'halchal-shell-v1';
-const API_CACHE_NAME = 'halchal-api-v1';
+const CACHE_NAME = 'halchal-shell-v2';
+const API_CACHE_NAME = 'halchal-api-v2';
 
 const STATIC_PRECACHE = [
-  '/',
   '/manifest.webmanifest',
   '/favicon.ico',
   '/apple-touch-icon.png',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
-  '/fonts/NotoSansBengali.ttf',
 ];
 
 // Install Event: Pre-cache core shell
@@ -45,10 +43,25 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch Event: Optimized multi-tier caching
+// Fetch Event: Optimized multi-tier caching with zero crawl interference
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
+
+  // Strictly ignore non-GET requests
+  if (request.method !== 'GET') {
+    return;
+  }
+
+  // 0. Explicit exclusions: Never intercept OG images, dynamic sitemaps, robots.txt, or crawlers
+  if (
+    url.pathname.startsWith('/api/og') ||
+    url.pathname.startsWith('/sitemap') ||
+    url.pathname === '/robots.txt' ||
+    url.pathname.endsWith('.xml')
+  ) {
+    return;
+  }
 
   // 1. Zone API Requests (/api/zone/*): Network First with Cache Fallback
   if (url.pathname.startsWith('/api/zone/')) {
@@ -90,10 +103,9 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 2. Static Assets (_next/static, fonts, icons): Cache First
+  // 2. Static Assets (_next/static, icons): Cache First
   if (
     url.pathname.startsWith('/_next/static/') ||
-    url.pathname.startsWith('/fonts/') ||
     url.pathname.startsWith('/icons/')
   ) {
     event.respondWith(
@@ -111,14 +123,21 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 3. Navigation Requests (HTML pages): Network First, Cache Fallback
+  // 3. Navigation Requests (HTML pages): Network First, Offline Fallback Only
+  // Avoids caching stale HTML for search crawlers or serving outdated utility status as fresh
   if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request).catch(async () => {
         const cached = await caches.match(request);
-        if (cached) return cached;
-        const rootCached = await caches.match('/');
-        if (rootCached) return rootCached;
+        if (cached) {
+          const headers = new Headers(cached.headers);
+          headers.set('x-halchal-offline', 'true');
+          return new Response(cached.body, {
+            status: cached.status,
+            statusText: cached.statusText,
+            headers,
+          });
+        }
         return new Response(
           '<!DOCTYPE html><html lang="bn"><head><meta charset="utf-8"/><title>হালচাল - অফলাইন</title></head><body style="background:#070A0F;color:#F8FAFC;font-family:sans-serif;text-align:center;padding:50px 20px;"><h2>ইন্টারনেট সংযোগ নেই</h2><p>নেটওয়ার্ক সংযোগ পুনরায় চালু হলে হালচাল স্বয়ংক্রিয়ভাবে আপডেট হবে।</p></body></html>',
           { headers: { 'Content-Type': 'text/html; charset=utf-8' } }

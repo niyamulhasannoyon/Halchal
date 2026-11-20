@@ -59,7 +59,7 @@ export function ConsentScreen({
             type="button"
             onClick={onGrantLocation}
             disabled={isLoading}
-            className="w-full py-4 px-6 rounded-2xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bengali font-bold text-lg shadow-lg shadow-emerald-900/20 transition-all cursor-pointer flex items-center justify-center gap-2 focus:outline-none focus-visible:ring-4 focus-visible:ring-emerald-500/50 disabled:opacity-50"
+            className="w-full py-4 px-6 rounded-2xl bg-emerald-700 hover:bg-emerald-600 active:bg-emerald-800 text-white font-bengali font-bold text-lg shadow-lg shadow-emerald-950/20 transition-all cursor-pointer flex items-center justify-center gap-2 focus:outline-none focus-visible:ring-4 focus-visible:ring-emerald-500/50 disabled:opacity-50"
           >
             {isLoading ? (
               <span className="flex items-center gap-2">
