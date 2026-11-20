@@ -3,6 +3,8 @@
  * Rule: Install prompt is shown ONLY after the first successful report.
  */
 
+import { trackEvent } from '@/lib/analytics';
+
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
@@ -103,6 +105,7 @@ export async function triggerInstallPrompt(): Promise<'accepted' | 'dismissed' |
     await deferredInstallPrompt.prompt();
     const choice = await deferredInstallPrompt.userChoice;
     deferredInstallPrompt = null;
+    trackEvent('install_prompt_shown', { outcome: choice.outcome });
     if (choice.outcome === 'accepted') {
       localStorage.setItem(PROMPT_DISMISSED_KEY, 'true');
     }

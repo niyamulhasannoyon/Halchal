@@ -16,6 +16,30 @@ const bundleAnalyzer = withBundleAnalyzer({
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  env: {
+    NEXT_PUBLIC_SITE_URL:
+      process.env.NEXT_PUBLIC_SITE_URL ||
+      (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : '') ||
+      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '') ||
+      'https://halchal420.vercel.app',
+    NEXT_PUBLIC_APP_URL:
+      process.env.NEXT_PUBLIC_APP_URL ||
+      (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : '') ||
+      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '') ||
+      'https://halchal420.vercel.app',
+    NEXT_PUBLIC_SUPABASE_URL:
+      process.env.NEXT_PUBLIC_SUPABASE_URL ||
+      'https://jfllpmaljrprcomysvpc.supabase.co',
+    NEXT_PUBLIC_SUPABASE_ANON_KEY:
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpmbGxwbWFsanJwcmNvbXlzdnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTUwODU2NDMsImV4cCI6MjExMDY2MTY0M30.lWDHcoGzMtud-3xfV4k2azlMBaDTZv6DFguEHfOKZ3g',
+    NEXT_PUBLIC_GOOGLE_CLIENT_ID:
+      process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
+      '333543233929-6tqbvu9n8hlq9u6nle7a4b6bomvnv0jv.apps.googleusercontent.com',
+    NEXT_PUBLIC_MAP_STYLE_URL:
+      process.env.NEXT_PUBLIC_MAP_STYLE_URL ||
+      'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+  },
   reactStrictMode: true,
   poweredByHeader: false,
   compress: true, // Enables Brotli and Gzip compression

@@ -8,6 +8,7 @@ import { markSuccessfulReportSubmitted } from '@/lib/pwa';
 import { toBengaliDigits, toAsciiDigits } from '@/lib/bengali-utils';
 import { getBrowserAuthToken } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthContext';
+import { trackEvent } from '@/lib/analytics';
 
 interface OneTapReportSheetProps {
   isOpen: boolean;
@@ -76,6 +77,8 @@ export function OneTapReportSheet({
       setSelectedCategory('electricity');
     }
 
+    trackEvent('report_started', { category: initialCategory || 'electricity' });
+
     setCoords({ lat: defaultLat ?? 23.746177, lng: defaultLng ?? 90.373828, accuracy: 35 });
 
     if (typeof navigator !== 'undefined' && 'geolocation' in navigator) {
@@ -141,6 +144,7 @@ export function OneTapReportSheet({
     if (typeof navigator !== 'undefined' && !navigator.onLine) {
       await enqueueReport(payload);
       markSuccessfulReportSubmitted();
+      trackEvent('report_completed', { category: selectedCategory, state });
       setIsSubmitting(false);
       onReportSuccess?.('অফলাইনে সেভ হয়েছে, নেট এলেই জমা হবে');
       onClose();
@@ -164,6 +168,7 @@ export function OneTapReportSheet({
 
       if (res.ok && data.success) {
         markSuccessfulReportSubmitted();
+        trackEvent('report_completed', { category: selectedCategory, state });
         setIsSubmitting(false);
         onReportSuccess?.('আপনার রিপোর্ট সফলভাবে গ্রহণ করা হয়েছে!');
         onClose();

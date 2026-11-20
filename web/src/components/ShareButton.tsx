@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Share2, Check } from 'lucide-react';
 import { generateShareTextBn } from '@/lib/bengali-utils';
+import { trackEvent } from '@/lib/analytics';
 
 export interface ShareButtonProps {
   h3Index: string;
@@ -43,6 +44,7 @@ export function ShareButton({
           text: shareText,
           url: shareUrl,
         });
+        trackEvent('share_clicked', { channel: 'native_share' });
         return;
       } catch (err: unknown) {
         if ((err as Error)?.name === 'AbortError') return;
@@ -52,9 +54,11 @@ export function ShareButton({
     // Fallback: Copy share URL (including time bucket) to clipboard
     try {
       await navigator.clipboard.writeText(shareUrl);
+      trackEvent('share_clicked', { channel: 'clipboard' });
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
     } catch {
+      trackEvent('share_clicked', { channel: 'clipboard' });
       prompt('শেয়ার লিংকটি কপি করুন:', shareUrl);
     }
   };

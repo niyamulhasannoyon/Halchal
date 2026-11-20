@@ -21,6 +21,7 @@ export default defineConfig({
       'src/lib/og-route.test.ts',
       'src/lib/bengali-visual-regression.test.ts',
       'src/lib/indexnow.test.ts',
+      'src/lib/analytics.test.ts',
     ],
   },
 });
