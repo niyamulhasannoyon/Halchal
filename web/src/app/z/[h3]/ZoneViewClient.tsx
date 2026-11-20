@@ -29,7 +29,13 @@ export function ZoneViewClient({
   const router = useRouter();
   const [zoneStatus, setZoneStatus] = useState<ZoneStatusResponse>(initialStatus);
   const [isReportOpen, setIsReportOpen] = useState(false);
+  const [selectedReportCategory, setSelectedReportCategory] = useState<UtilityCategory>('electricity');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const handleOpenReport = (category: UtilityCategory = 'electricity') => {
+    setSelectedReportCategory(category);
+    setIsReportOpen(true);
+  };
 
   const handleOptimisticReport = (
     category: UtilityCategory,
@@ -70,36 +76,41 @@ export function ZoneViewClient({
         areaName={seedMeta.area_name_bn}
         defaultLat={seedMeta.lat}
         defaultLng={seedMeta.lng}
+        initialCategory={selectedReportCategory}
         onOptimisticReport={handleOptimisticReport}
         onReportSuccess={showToast}
       />
 
       {/* Main Content Area */}
       <div className="flex-1 pb-24">
-        {/* Sticky Area Pill */}
-        <AreaPill
-          areaName={`${seedMeta.area_name_bn} (${seedMeta.ward})`}
-          updatedAt={zoneStatus.updated_at}
-          isLive={true}
-        />
+        {/* Global HUD Header (Sticky Top) */}
+        <header className="sticky top-0 z-40 bg-[var(--canvas-bg)]/90 backdrop-blur-md border-b border-[var(--surface-border)]/60 transition-colors">
+          <div className="max-w-md mx-auto px-4 py-2.5 flex items-center justify-between gap-2">
+            <Link
+              href="/"
+              className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-bengali font-bold text-sm hover:underline py-1 px-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 transition-colors"
+            >
+              <span>←</span>
+              <span>আমার এলাকায় যান</span>
+            </Link>
 
-        {/* Global HUD Header */}
-        <div className="max-w-md mx-auto px-4 pt-3 pb-1 flex items-center justify-between gap-2">
-          <Link
-            href="/"
-            className="flex items-center gap-2 text-emerald-500 font-bengali font-bold text-sm hover:underline"
-          >
-            <span>←</span>
-            <span>আমার এলাকায় যান</span>
-          </Link>
-
-          <div className="flex items-center gap-2">
-            <ShareButton
-              h3Index={h3}
-              areaName={seedMeta.area_name_bn}
-            />
-            <ThemeToggle />
+            <div className="flex items-center gap-1.5">
+              <ShareButton
+                h3Index={h3}
+                areaName={seedMeta.area_name_bn}
+              />
+              <ThemeToggle variant="compact" />
+            </div>
           </div>
+        </header>
+
+        {/* Area Pill Card */}
+        <div className="max-w-md mx-auto px-4 pt-3 pb-1">
+          <AreaPill
+            areaName={`${seedMeta.area_name_bn} (${seedMeta.ward})`}
+            updatedAt={zoneStatus.updated_at}
+            isLive={true}
+          />
         </div>
 
         {/* Toast Notification */}
@@ -119,35 +130,35 @@ export function ZoneViewClient({
               category="electricity"
               state={categories.electricity.state}
               reporterCount={categories.electricity.distinct_reporters}
-              onClick={() => setIsReportOpen(true)}
+              onClick={() => handleOpenReport('electricity')}
             />
 
             <StatusCard
               category="gas"
               state={categories.gas.state}
               reporterCount={categories.gas.distinct_reporters}
-              onClick={() => setIsReportOpen(true)}
+              onClick={() => handleOpenReport('gas')}
             />
 
             <StatusCard
               category="water"
               state={categories.water.state}
               reporterCount={categories.water.distinct_reporters}
-              onClick={() => setIsReportOpen(true)}
+              onClick={() => handleOpenReport('water')}
             />
 
             <StatusCard
               category="lpg"
               state={categories.lpg.state}
               reporterCount={categories.lpg.distinct_reporters}
-              onClick={() => setIsReportOpen(true)}
+              onClick={() => handleOpenReport('lpg')}
             />
           </div>
 
           {/* Report Button */}
           <div className="pt-2">
             <ReportButton
-              onClick={() => setIsReportOpen(true)}
+              onClick={() => handleOpenReport('electricity')}
               label="এই এলাকার হাল জানান"
             />
           </div>

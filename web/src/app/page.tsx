@@ -24,10 +24,12 @@ import { OfflineBanner } from '@/components/OfflineBanner';
 import { PWAInstallBanner } from '@/components/PWAInstallBanner';
 import { PushNotificationOptInModal } from '@/components/PushNotificationOptInModal';
 import Link from 'next/link';
-import { Bell } from 'lucide-react';
+import { Bell, Shield, User as UserIcon } from 'lucide-react';
 import { registerServiceWorker } from '@/lib/pwa';
 import { initOfflineQueueListeners } from '@/lib/offline-queue';
-import { ensureAnonymousSession } from '@/lib/supabase';
+import { ensureAnonymousSession, getBrowserAuthToken } from '@/lib/supabase';
+import { useAuth } from '@/context/AuthContext';
+import { toBengaliDigits } from '@/lib/bengali-utils';
 import { useRouter } from 'next/navigation';
 
 const CONSENT_KEY = 'halchal-consent-granted';
@@ -35,6 +37,7 @@ const ZONE_KEY = 'halchal-selected-zone';
 
 export default function HomePage() {
   const router = useRouter();
+  const { trustInfo, isAnonymous, openAuthModal } = useAuth();
 
   const [hasCheckedStorage, setHasCheckedStorage] = useState(false);
   const [showConsent, setShowConsent] = useState(false);
@@ -46,9 +49,15 @@ export default function HomePage() {
   const [isOffline, setIsOffline] = useState(false);
 
   const [isReportOpen, setIsReportOpen] = useState(false);
+  const [selectedReportCategory, setSelectedReportCategory] = useState<UtilityCategory>('electricity');
   const [isAreaPickerOpen, setIsAreaPickerOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const previousStatusRef = useRef<ZoneStatusResponse | null>(null);
+
+  const handleOpenReport = (category: UtilityCategory = 'electricity') => {
+    setSelectedReportCategory(category);
+    setIsReportOpen(true);
+  };
 
   // Initialize PWA Service Worker & Anonymous Auth
   useEffect(() => {
@@ -66,9 +75,13 @@ export default function HomePage() {
 
     // Setup offline queue auto-flusher
     const cleanupQueue = initOfflineQueueListeners(async (payload) => {
+      const token = await getBrowserAuthToken();
       const res = await fetch('/api/report', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify(payload),
       });
       return { success: res.ok };
@@ -231,6 +244,7 @@ export default function HomePage() {
         areaName={activeZone.area_name_bn}
         defaultLat={activeZone.lat}
         defaultLng={activeZone.lng}
+        initialCategory={selectedReportCategory}
         onOptimisticReport={handleOptimisticReport}
         onOptimisticRollback={handleOptimisticRollback}
         onReportSuccess={showToast}
@@ -238,6 +252,71 @@ export default function HomePage() {
 
       {/* Main Content Area */}
       <div className="flex-1 pb-32">
+        {/* Global HUD Header Bar (Sticky Top) */}
+        <header className="sticky top-0 z-40 bg-[var(--canvas-bg)]/90 backdrop-blur-md border-b border-[var(--surface-border)]/60 transition-colors">
+          <div className="max-w-md mx-auto px-4 py-2.5 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <span className="text-2xl leading-none" aria-hidden="true">⚡</span>
+              <div>
+                <div className="flex items-center gap-1.5">
+                  <span className="font-bengali font-bold text-lg text-[var(--text-main)] leading-none">
+                    হালচাল
+                  </span>
+                  <span className="font-bengali text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                    লাইভ HUD
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              {/* Citizen Identity & Login Pill */}
+              <button
+                type="button"
+                onClick={() => openAuthModal(isAnonymous ? 'login' : 'upgrade')}
+                aria-label="নাগরিক প্রোফাইল ও লগইন"
+                className={`h-9 px-2.5 rounded-xl border flex items-center gap-1.5 text-xs font-semibold transition-all cursor-pointer shadow-xs ${
+                  trustInfo.tier === 'phone'
+                    ? 'border-amber-500/30 bg-amber-500/10 text-amber-500 hover:bg-amber-500/20'
+                    : trustInfo.tier === 'google'
+                    ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20'
+                    : 'border-[var(--surface-border)] bg-[var(--surface-bg)] text-[var(--text-sub)] hover:text-[var(--text-main)] hover:bg-[var(--surface-elevated)]'
+                }`}
+              >
+                {trustInfo.tier === 'phone' ? (
+                  <>
+                    <Shield className="w-3.5 h-3.5 text-amber-500" />
+                    <span>{toBengaliDigits(trustInfo.multiplier)}x</span>
+                  </>
+                ) : trustInfo.tier === 'google' ? (
+                  <>
+                    <Shield className="w-3.5 h-3.5 text-emerald-500" />
+                    <span>{toBengaliDigits(trustInfo.multiplier)}x</span>
+                  </>
+                ) : (
+                  <>
+                    <UserIcon className="w-3.5 h-3.5" />
+                    <span className="hidden xs:inline">লগইন</span>
+                  </>
+                )}
+              </button>
+
+              <Link
+                href="/settings"
+                aria-label="নোটিফিকেশন সেটিংস"
+                className="w-9 h-9 rounded-xl border border-[var(--surface-border)] bg-[var(--surface-bg)] text-[var(--text-sub)] hover:text-[var(--text-main)] hover:bg-[var(--surface-elevated)] flex items-center justify-center transition-colors shrink-0 shadow-xs"
+              >
+                <Bell className="w-4 h-4" />
+              </Link>
+              <ShareButton
+                h3Index={activeZone.h3_index}
+                areaName={activeZone.area_name_bn}
+              />
+              <ThemeToggle variant="compact" />
+            </div>
+          </div>
+        </header>
+
         {/* Offline Banner */}
         <OfflineBanner
           isOffline={isOffline}
@@ -245,40 +324,14 @@ export default function HomePage() {
           updatedAt={zoneStatus?.updated_at}
         />
 
-        {/* Sticky Area Pill Header */}
-        <AreaPill
-          areaName={`${activeZone.area_name_bn} (${activeZone.ward})`}
-          updatedAt={zoneStatus?.updated_at}
-          isLive={!isOffline}
-          onAreaClick={() => setIsAreaPickerOpen(true)}
-        />
-
-        {/* Global HUD Header Bar */}
-        <div className="max-w-md mx-auto px-4 pt-3 pb-1 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <span className="text-xl">⚡</span>
-            <span className="font-bengali font-bold text-lg text-[var(--text-main)]">
-              হালচাল
-            </span>
-            <span className="font-bengali text-xs text-[var(--text-sub)]">
-              লাইভ HUD
-            </span>
-          </div>
-
-          <div className="flex items-center gap-1.5 sm:gap-2">
-            <Link
-              href="/settings"
-              aria-label="নোটিফিকেশন সেটিংস"
-              className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl border border-[var(--surface-border)] bg-[var(--surface-bg)] text-[var(--text-sub)] hover:text-[var(--text-main)] flex items-center justify-center transition-colors shrink-0"
-            >
-              <Bell className="w-4 h-4" />
-            </Link>
-            <ShareButton
-              h3Index={activeZone.h3_index}
-              areaName={activeZone.area_name_bn}
-            />
-            <ThemeToggle variant="compact" />
-          </div>
+        {/* Area Pill Selector Card */}
+        <div className="max-w-md mx-auto px-4 pt-3 pb-1">
+          <AreaPill
+            areaName={`${activeZone.area_name_bn} (${activeZone.ward})`}
+            updatedAt={zoneStatus?.updated_at}
+            isLive={!isOffline}
+            onAreaClick={() => setIsAreaPickerOpen(true)}
+          />
         </div>
 
         {/* Toast Notification Banner */}
@@ -299,7 +352,7 @@ export default function HomePage() {
               category="electricity"
               state={currentCategories.electricity.state}
               reporterCount={currentCategories.electricity.distinct_reporters}
-              onClick={() => setIsReportOpen(true)}
+              onClick={() => handleOpenReport('electricity')}
             />
 
             {/* Gas */}
@@ -307,7 +360,7 @@ export default function HomePage() {
               category="gas"
               state={currentCategories.gas.state}
               reporterCount={currentCategories.gas.distinct_reporters}
-              onClick={() => setIsReportOpen(true)}
+              onClick={() => handleOpenReport('gas')}
             />
 
             {/* Water */}
@@ -315,7 +368,7 @@ export default function HomePage() {
               category="water"
               state={currentCategories.water.state}
               reporterCount={currentCategories.water.distinct_reporters}
-              onClick={() => setIsReportOpen(true)}
+              onClick={() => handleOpenReport('water')}
             />
 
             {/* LPG */}
@@ -323,14 +376,14 @@ export default function HomePage() {
               category="lpg"
               state={currentCategories.lpg.state}
               reporterCount={currentCategories.lpg.distinct_reporters}
-              onClick={() => setIsReportOpen(true)}
+              onClick={() => handleOpenReport('lpg')}
             />
           </div>
 
           {/* Action Zone: Report Button */}
           <div className="pt-2">
             <ReportButton
-              onClick={() => setIsReportOpen(true)}
+              onClick={() => handleOpenReport('electricity')}
               label="আপনার এলাকার হাল জানান"
             />
           </div>

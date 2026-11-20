@@ -3,6 +3,22 @@
 @theme {
   --font-bengali: var(--font-bengali-custom), "Hind Siliguri", "Noto Sans Bengali", system-ui, -apple-system, sans-serif;
 
+  /* Semantic Dynamic Tokens (Resolved via CSS custom variables) */
+  --color-canvas: var(--canvas-bg);
+  --color-surface: var(--surface-bg);
+  --color-surface-elevated: var(--surface-elevated);
+  --color-surface-border: var(--surface-border);
+  --color-surface-border-strong: var(--surface-border-strong);
+
+  --color-text-primary: var(--text-main);
+  --color-text-secondary: var(--text-sub);
+  --color-text-muted: var(--text-tertiary);
+  --color-text-main: var(--text-main);
+  --color-text-sub: var(--text-sub);
+  --color-primary: var(--text-main);
+  --color-secondary: var(--text-sub);
+  --color-muted: var(--text-tertiary);
+
   /* Raw Dark OLED Tokens */
   --color-oled-canvas: #070A0F;
   --color-oled-surface: #111622;

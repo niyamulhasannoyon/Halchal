@@ -7,6 +7,63 @@
 
 const BENGALI_DIGITS = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'] as const;
 
+const BENGALI_TO_ASCII_MAP: Record<string, string> = {
+  '০': '0',
+  '১': '1',
+  '২': '2',
+  '৩': '3',
+  '৪': '4',
+  '৫': '5',
+  '৬': '6',
+  '৭': '7',
+  '৮': '8',
+  '৯': '9',
+};
+
+/**
+ * Converts Bengali digits (০-৯) to Western Arabic digits (0-9).
+ */
+export function toAsciiDigits(input: string | null | undefined): string {
+  if (!input) return '';
+  return String(input).replace(/[০-৯]/g, (d) => BENGALI_TO_ASCII_MAP[d] ?? d);
+}
+
+/**
+ * Normalizes and validates Bangladeshi mobile numbers (+8801[3-9]XXXXXXXX).
+ * Accepts numbers with or without +880/880/0 prefix and with Bengali or English numerals.
+ */
+export function normalizeBangladeshiPhone(input: string | null | undefined): {
+  normalized: string;
+  isValid: boolean;
+  formattedLocal: string;
+} {
+  if (!input) {
+    return { normalized: '', isValid: false, formattedLocal: '' };
+  }
+
+  // Convert any Bengali numerals to ASCII and strip non-digit characters
+  const rawAscii = toAsciiDigits(input).replace(/\D/g, '');
+
+  let digits = rawAscii;
+  if (digits.startsWith('880')) {
+    digits = digits.slice(3);
+  }
+  if (digits.startsWith('0')) {
+    digits = digits.slice(1);
+  }
+
+  // Bangladeshi mobile numbers must have exactly 10 digits starting with 1[3-9]
+  const isValid = /^1[3-9]\d{8}$/.test(digits);
+  const normalized = isValid ? `+880${digits}` : '';
+  const formattedLocal = isValid ? `0${digits}` : '';
+
+  return {
+    normalized,
+    isValid,
+    formattedLocal,
+  };
+}
+
 /**
  * Converts Western Arabic digits (0-9) to Bengali digits (০-৯).
  * Employs Intl.NumberFormat('bn-BD') as the primary engine with a manual-map fallback.

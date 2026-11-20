@@ -131,14 +131,14 @@ function HistoryContent() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <ThemeToggle />
+          <div className="flex items-center gap-1.5">
             <Link
               href="/"
-              className="text-xs font-bengali text-emerald-600 dark:text-emerald-400 font-bold hover:underline py-1 px-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30"
+              className="text-xs font-bengali text-emerald-600 dark:text-emerald-400 font-bold hover:underline py-1.5 px-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 transition-colors"
             >
               লাইভ হালচাল
             </Link>
+            <ThemeToggle variant="compact" />
           </div>
         </header>
 

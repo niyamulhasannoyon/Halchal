@@ -8,20 +8,22 @@ import { BottomNav } from '@/components/BottomNav';
 
 export default function TermsPage() {
   return (
-    <div className="min-h-screen bg-canvas text-text-primary pb-28">
+    <div className="min-h-screen bg-[var(--canvas-bg)] text-[var(--text-main)] pb-28 font-bengali transition-colors">
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-surface/90 backdrop-blur-md border-b border-surface-border px-4 py-3.5 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Link
-            href="/settings"
-            className="p-2 -ml-2 text-text-muted hover:text-text-primary rounded-lg transition-colors"
-            aria-label="সেটিংসে ফিরে যান"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </Link>
-          <h1 className="text-lg font-bold">ব্যবহারের শর্তাবলী (Terms of Service)</h1>
+      <header className="sticky top-0 z-40 bg-[var(--surface-bg)]/90 backdrop-blur-md border-b border-[var(--surface-border)] px-4 py-3.5">
+        <div className="max-w-2xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Link
+              href="/settings"
+              className="p-2 -ml-2 text-[var(--text-sub)] hover:text-[var(--text-main)] hover:bg-[var(--surface-elevated)] rounded-xl transition-colors"
+              aria-label="সেটিংসে ফিরে যান"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </Link>
+            <h1 className="text-lg font-bold text-[var(--text-main)]">ব্যবহারের শর্তাবলী (Terms of Service)</h1>
+          </div>
+          <ThemeToggle variant="compact" />
         </div>
-        <ThemeToggle />
       </header>
 
       <main className="max-w-2xl mx-auto px-4 py-6 space-y-6">

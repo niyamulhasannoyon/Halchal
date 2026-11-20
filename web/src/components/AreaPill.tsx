@@ -21,39 +21,46 @@ export function AreaPill({
   const relativeTime = formatRelativeTimeBn(updatedAt);
 
   return (
-    <header className={`sticky top-0 z-40 w-full py-2.5 px-4 backdrop-blur-md bg-[var(--canvas-bg)]/85 border-b border-[var(--surface-border)]/60 transition-colors ${className}`}>
-      <div className="max-w-md mx-auto flex items-center justify-between gap-3">
-        {/* Area Title & Location Marker */}
-        <button
-          type="button"
-          onClick={onAreaClick}
-          className="flex items-center gap-2 text-left group rounded-xl px-2.5 py-1.5 -ml-2 hover:bg-[var(--surface-elevated)] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
-          aria-label={`বর্তমান এলাকা: ${areaName}। পরিবর্তনের জন্য চাপুন।`}
-        >
-          {/* Location Pin Icon */}
-          <span className="text-emerald-500 shrink-0 text-lg leading-none" aria-hidden="true">
-            📍
-          </span>
-          <div className="flex flex-col">
-            <span className="font-bengali font-bold text-base md:text-lg text-[var(--text-main)] group-hover:text-emerald-500 transition-colors leading-tight truncate max-w-[200px] sm:max-w-[260px]">
+    <div
+      className={`w-full flex items-center justify-between gap-2 p-3 sm:p-3.5 rounded-2xl bg-[var(--surface-bg)] border border-[var(--surface-border)] shadow-xs transition-colors ${className}`}
+    >
+      {/* Area Title & Location Marker */}
+      <button
+        type="button"
+        onClick={onAreaClick}
+        className="flex items-center gap-2.5 text-left group rounded-xl hover:opacity-90 transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 cursor-pointer min-w-0"
+        aria-label={`বর্তমান এলাকা: ${areaName}। পরিবর্তনের জন্য চাপুন।`}
+      >
+        <span className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 flex items-center justify-center text-base shrink-0 group-hover:scale-105 transition-transform">
+          📍
+        </span>
+        <div className="min-w-0">
+          <div className="flex items-center gap-1.5">
+            <span className="font-bengali font-bold text-sm sm:text-base text-[var(--text-main)] group-hover:text-emerald-500 transition-colors leading-tight truncate">
               {areaName}
             </span>
-          </div>
-        </button>
-
-        {/* Live Indicator + Relative Time */}
-        <div className="flex items-center gap-2 bg-[var(--surface-bg)] border border-[var(--surface-border)] rounded-full px-3 py-1 shrink-0 shadow-sm">
-          {isLive && (
-            <span className="relative flex h-2.5 w-2.5 shrink-0" title="লাইভ আপডেট সক্রিয়">
-              <span className="animate-live-dot absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+            <span className="text-[10px] text-[var(--text-tertiary)] font-bold group-hover:text-emerald-500 transition-colors" aria-hidden="true">
+              ▼
             </span>
-          )}
-          <span className="font-bengali text-xs md:text-sm text-[var(--text-sub)] font-medium whitespace-nowrap">
-            {relativeTime}
+          </div>
+          <span className="font-bengali text-[11px] text-[var(--text-sub)] block mt-0.5">
+            এলাকা পরিবর্তন করতে চাপুন
           </span>
         </div>
+      </button>
+
+      {/* Live Indicator + Relative Time */}
+      <div className="flex items-center gap-1.5 bg-[var(--surface-elevated)] border border-[var(--surface-border)] rounded-full px-2.5 py-1 shrink-0">
+        {isLive && (
+          <span className="relative flex h-2 w-2 shrink-0" title="লাইভ আপডেট সক্রিয়">
+            <span className="animate-live-dot absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+          </span>
+        )}
+        <span className="font-bengali text-xs text-[var(--text-sub)] font-semibold whitespace-nowrap">
+          {relativeTime}
+        </span>
       </div>
-    </header>
+    </div>
   );
 }

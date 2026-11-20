@@ -67,9 +67,24 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     if (serviceClient && body.lat && body.lng) {
       const h3Index = latLngToH3(body.lat, body.lng);
       if (isValidH3Zone(h3Index)) {
+        // Resolve authenticated user ID from Bearer token if provided
+        let userId = '00000000-0000-0000-0000-000000000000';
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+          try {
+            const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+            const serverClient = getSupabaseServerClient();
+            const { data: authData } = await serverClient.auth.getUser(token);
+            if (authData?.user?.id) {
+              userId = authData.user.id;
+            }
+          } catch {
+            // Fallback to anonymous placeholder
+          }
+        }
+
         // Direct call to submit_report RPC via service role for local dev
         const { data, error } = await serviceClient.rpc('submit_report', {
-          p_user: '00000000-0000-0000-0000-000000000000',
+          p_user: userId,
           p_device_hash: `dev_${body.device_id || 'default'}`,
           p_h3: h3Index,
           p_category: body.category,

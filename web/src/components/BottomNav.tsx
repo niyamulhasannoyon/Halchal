@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useRouter, usePathname } from 'next/navigation';
 
 export type NavTab = 'status' | 'map' | 'history';
 
@@ -11,20 +12,50 @@ interface BottomNavProps {
 }
 
 export function BottomNav({
-  activeTab = 'status',
+  activeTab: propActiveTab,
   onTabChange,
   className = '',
 }: BottomNavProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+
+  // Automatically determine active tab from route if not explicitly passed
+  let currentActiveTab: NavTab | null = propActiveTab ?? null;
+  if (!currentActiveTab && pathname) {
+    if (pathname === '/' || pathname.startsWith('/z/')) {
+      currentActiveTab = 'status';
+    } else if (pathname.startsWith('/map')) {
+      currentActiveTab = 'map';
+    } else if (pathname.startsWith('/history')) {
+      currentActiveTab = 'history';
+    }
+  }
+
+  const handleTabClick = (tabId: NavTab) => {
+    if (onTabChange) {
+      onTabChange(tabId);
+      return;
+    }
+
+    if (tabId === 'status') {
+      router.push('/');
+    } else if (tabId === 'map') {
+      router.push('/map');
+    } else if (tabId === 'history') {
+      router.push('/history');
+    }
+  };
+
   const tabs: Array<{ id: NavTab; label: string; icon: React.ReactNode }> = [
     {
       id: 'status',
       label: 'হালচাল',
       icon: (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
-          <rect width="7" height="9" x="3" y="3" rx="1" />
-          <rect width="7" height="5" x="14" y="3" rx="1" />
-          <rect width="7" height="9" x="14" y="12" rx="1" />
-          <rect width="7" height="5" x="3" y="16" rx="1" />
+          <rect width="7" height="9" x="3" y="3" rx="1.5" />
+          <rect width="7" height="5" x="14" y="3" rx="1.5" />
+          <rect width="7" height="9" x="14" y="12" rx="1.5" />
+          <rect width="7" height="5" x="3" y="16" rx="1.5" />
         </svg>
       ),
     },
@@ -58,14 +89,14 @@ export function BottomNav({
     >
       <div className="max-w-md mx-auto grid grid-cols-3 gap-1">
         {tabs.map((tab) => {
-          const isActive = activeTab === tab.id;
+          const isActive = currentActiveTab === tab.id;
           return (
             <button
               key={tab.id}
               type="button"
-              onClick={() => onTabChange?.(tab.id)}
+              onClick={() => handleTabClick(tab.id)}
               aria-current={isActive ? 'page' : undefined}
-              className={`flex flex-col items-center justify-center py-1.5 px-2 rounded-xl transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 cursor-pointer select-none ${
+              className={`flex flex-col items-center justify-center py-2 px-2 rounded-xl transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 cursor-pointer select-none active:scale-95 ${
                 isActive
                   ? 'text-emerald-500 font-bold bg-emerald-500/10'
                   : 'text-[var(--text-sub)] hover:text-[var(--text-main)] hover:bg-[var(--surface-elevated)] font-medium'

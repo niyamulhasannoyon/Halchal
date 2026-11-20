@@ -24,17 +24,17 @@ export default function ErrorBoundary({
   }, [error]);
 
   return (
-    <div className="min-h-screen bg-canvas text-text-primary flex flex-col items-center justify-center p-6 text-center">
+    <div className="min-h-screen bg-[var(--canvas-bg)] text-[var(--text-main)] font-bengali flex flex-col items-center justify-center p-6 text-center transition-colors">
       <div className="max-w-md w-full space-y-6">
-        <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-400 mx-auto flex items-center justify-center">
+        <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-500 mx-auto flex items-center justify-center">
           <AlertTriangle className="w-8 h-8" />
         </div>
 
         <div className="space-y-2">
-          <h1 className="text-xl font-bold text-text-primary">
+          <h1 className="text-xl font-bold text-[var(--text-main)]">
             সাময়িক কারিগরি সমস্যা
           </h1>
-          <p className="text-sm text-text-secondary leading-relaxed">
+          <p className="text-sm text-[var(--text-sub)] leading-relaxed">
             দুঃখিত, তথ্য লোড করতে সমস্যা হয়েছে। আপনার ইন্টারনেট সংযোগ পরীক্ষা করে পুনরায় চেষ্টা করুন।
           </p>
         </div>
@@ -42,14 +42,14 @@ export default function ErrorBoundary({
         <div className="flex flex-col sm:flex-row gap-3 pt-2">
           <button
             onClick={() => reset()}
-            className="flex-1 py-3 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-semibold text-sm transition-colors flex items-center justify-center gap-2 shadow-xs cursor-pointer"
+            className="flex-1 py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm transition-all flex items-center justify-center gap-2 shadow-xs cursor-pointer active:scale-[0.99]"
           >
             <RotateCcw className="w-4 h-4" />
             <span>আবার চেষ্টা করুন</span>
           </button>
           <Link
             href="/"
-            className="flex-1 py-3 px-4 rounded-xl border border-surface-border bg-surface hover:bg-surface/80 text-text-primary font-medium text-sm transition-colors flex items-center justify-center gap-2"
+            className="flex-1 py-3 px-4 rounded-xl border border-[var(--surface-border)] bg-[var(--surface-bg)] hover:bg-[var(--surface-elevated)] text-[var(--text-main)] font-semibold text-sm transition-colors flex items-center justify-center gap-2"
           >
             <Home className="w-4 h-4" />
             <span>প্রধান পাতা</span>

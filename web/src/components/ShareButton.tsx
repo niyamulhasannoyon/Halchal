@@ -1,17 +1,20 @@
 'use client';
 
 import React, { useState } from 'react';
+import { Share2, Check } from 'lucide-react';
 
 interface ShareButtonProps {
   h3Index: string;
   areaName: string;
   className?: string;
+  variant?: 'default' | 'compact';
 }
 
 export function ShareButton({
   h3Index,
   areaName,
   className = '',
+  variant = 'compact',
 }: ShareButtonProps) {
   const [copied, setCopied] = useState(false);
 
@@ -32,7 +35,6 @@ export function ShareButton({
         });
         return;
       } catch (err: unknown) {
-        // User aborted share sheet or unsupported format -> fallback to copy
         if ((err as Error)?.name === 'AbortError') return;
       }
     }
@@ -43,21 +45,40 @@ export function ShareButton({
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
     } catch {
-      // Legacy prompt fallback
       prompt('শেয়ার লিংকটি কপি করুন:', shareUrl);
     }
   };
+
+  if (variant === 'compact') {
+    return (
+      <button
+        type="button"
+        onClick={handleShare}
+        aria-label={`${areaName} এলাকার লাইভ কার্ড শেয়ার করুন`}
+        title={copied ? 'লিংক কপি হয়েছে!' : 'শেয়ার করুন'}
+        className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl border border-[var(--surface-border)] bg-[var(--surface-bg)] text-[var(--text-sub)] hover:text-[var(--text-main)] hover:bg-[var(--surface-elevated)] flex items-center justify-center transition-colors shrink-0 shadow-xs cursor-pointer select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${className}`}
+      >
+        {copied ? (
+          <Check className="w-4 h-4 text-emerald-500 stroke-[2.5]" />
+        ) : (
+          <Share2 className="w-4 h-4" />
+        )}
+      </button>
+    );
+  }
 
   return (
     <button
       type="button"
       onClick={handleShare}
-      className={`relative inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-[var(--surface-elevated)] hover:bg-[var(--surface-border)]/50 active:bg-[var(--surface-border)] text-[var(--text-main)] font-bengali font-bold text-sm md:text-base border border-[var(--surface-border)] shadow-sm transition-all cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 select-none ${className}`}
+      className={`relative inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-[var(--surface-elevated)] hover:bg-[var(--surface-border)]/50 active:bg-[var(--surface-border)] text-[var(--text-main)] font-bengali font-bold text-sm md:text-base border border-[var(--surface-border)] shadow-xs transition-all cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 select-none ${className}`}
       aria-label={`${areaName} এলাকার লাইভ কার্ড শেয়ার করুন`}
     >
-      <span className="text-base" aria-hidden="true">
-        {copied ? '✓' : '↗️'}
-      </span>
+      {copied ? (
+        <Check className="w-4 h-4 text-emerald-500 stroke-[2.5]" />
+      ) : (
+        <Share2 className="w-4 h-4" />
+      )}
       <span>{copied ? 'লিংক কপি হয়েছে!' : 'শেয়ার'}</span>
     </button>
   );
