@@ -66,11 +66,16 @@ export function getSupabaseServiceClient(): SupabaseClient | null {
   });
 }
 
+let isAnonymousDisabled = false;
+
 /**
  * Ensures an anonymous Supabase user session exists in the browser
  */
 export async function ensureAnonymousSession(): Promise<string | null> {
   if (typeof window === 'undefined') return null;
+  if (isAnonymousDisabled || (typeof sessionStorage !== 'undefined' && sessionStorage.getItem('halchal_anon_disabled') === 'true')) {
+    return null;
+  }
 
   try {
     const client = getSupabaseBrowserClient();
@@ -82,13 +87,17 @@ export async function ensureAnonymousSession(): Promise<string | null> {
 
     const { data: signInData, error } = await client.auth.signInAnonymously();
     if (error) {
-      console.warn('Anonymous auth sign-in warning:', error.message);
+      if (error.message?.includes('anonymous_provider_disabled') || (error as { status?: number }).status === 422) {
+        isAnonymousDisabled = true;
+        try {
+          sessionStorage.setItem('halchal_anon_disabled', 'true');
+        } catch {}
+      }
       return null;
     }
 
     return signInData.session?.access_token ?? null;
-  } catch (err) {
-    console.warn('Supabase auth initialization error:', err);
+  } catch {
     return null;
   }
 }

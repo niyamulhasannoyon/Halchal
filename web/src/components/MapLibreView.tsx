@@ -1,8 +1,14 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import { Map as MapLibreMap, NavigationControl, AttributionControl } from 'maplibre-gl';
+import { Map as MapLibreMap, NavigationControl, AttributionControl, setWorkerUrl } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
+
+if (typeof window !== 'undefined') {
+  try {
+    setWorkerUrl('/maplibre-gl-worker.js');
+  } catch {}
+}
 import * as h3 from 'h3-js';
 import {
   DHAKA_SEED_ZONES,

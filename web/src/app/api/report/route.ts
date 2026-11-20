@@ -45,7 +45,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       }
 
       // If edge function returned an application error (e.g. 400, 403, 429)
-      if (edgeRes.status < 500) {
+      // Note: 404 means the edge function was not deployed to Supabase gateway; fall through to database RPC fallback
+      if (edgeRes.status < 500 && edgeRes.status !== 404) {
         const errorData = await edgeRes.json().catch(() => ({}));
         return NextResponse.json(
           {

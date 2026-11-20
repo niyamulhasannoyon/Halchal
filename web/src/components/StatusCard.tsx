@@ -64,23 +64,23 @@ export function StatusCard({
       onClick={onClick}
       onKeyDown={onClick ? (e) => e.key === 'Enter' && onClick() : undefined}
       aria-label={`${categoryMeta.nameBn} স্ট্যাটাস`}
-      className={`group relative flex flex-col justify-between p-4 rounded-2xl bg-[var(--surface-bg)] border border-[var(--surface-border)] hover:border-[var(--surface-border-strong)] transition-all duration-200 min-h-[136px] shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 cursor-pointer select-none active:scale-[0.98] ${className}`}
+      className={`group relative flex flex-col justify-between p-3.5 sm:p-4 rounded-2xl bg-[var(--surface-bg)] border border-[var(--surface-border)] hover:border-[var(--surface-border-strong)] transition-all duration-200 min-h-[140px] shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 cursor-pointer select-none active:scale-[0.98] ${className}`}
     >
-      {/* Top Row: Category Icon + Title on Left, StateBadge on Right */}
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <span className="p-2 rounded-xl bg-[var(--surface-elevated)] border border-[var(--surface-border)] shrink-0 group-hover:scale-105 transition-transform">
+      {/* Top Section: Category Info & StateBadge */}
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="p-1.5 sm:p-2 rounded-xl bg-[var(--surface-elevated)] border border-[var(--surface-border)] shrink-0 group-hover:scale-105 transition-transform">
             {renderCategoryIcon(category)}
           </span>
-          <div className="flex flex-col">
-            <h3 className="font-bengali font-bold text-lg md:text-xl text-[var(--text-main)] leading-tight">
-              {categoryMeta.nameBn}
-            </h3>
-          </div>
+          <h3 className="font-bengali font-bold text-base sm:text-lg md:text-xl text-[var(--text-main)] leading-tight truncate">
+            {categoryMeta.nameBn}
+          </h3>
         </div>
 
-        {/* State Badge (Upper Right) */}
-        <StateBadge state={state} size="sm" />
+        {/* State Badge (Cleanly contained inside card) */}
+        <div className="self-start">
+          <StateBadge state={state} size="sm" />
+        </div>
       </div>
 
       {/* Bottom Row: Reporter Count Bar & Threshold Progress */}

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   DHAKA_SEED_ZONES,
   DEFAULT_DHAKA_ZONE,
@@ -8,6 +8,7 @@ import {
   ZoneStatusResponse,
   findNearestZone,
   createDefaultZoneStatus,
+  setStoredHomeZone,
 } from '@/lib/zones';
 import { UtilityCategory, UserReportState } from '@/lib/theme';
 import { AreaPill } from '@/components/AreaPill';
@@ -47,6 +48,7 @@ export default function HomePage() {
   const [isReportOpen, setIsReportOpen] = useState(false);
   const [isAreaPickerOpen, setIsAreaPickerOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const previousStatusRef = useRef<ZoneStatusResponse | null>(null);
 
   // Initialize PWA Service Worker & Anonymous Auth
   useEffect(() => {
@@ -157,6 +159,7 @@ export default function HomePage() {
 
   const handleZoneSelected = (zone: SeedZone) => {
     setActiveZone(zone);
+    setStoredHomeZone(zone.h3_index);
     localStorage.setItem(CONSENT_KEY, 'true');
     localStorage.setItem(ZONE_KEY, JSON.stringify(zone));
     void fetchStatus(zone.h3_index);
@@ -167,6 +170,7 @@ export default function HomePage() {
     category: UtilityCategory,
     state: UserReportState
   ) => {
+    previousStatusRef.current = zoneStatus;
     setZoneStatus((prev) => {
       const base = prev ?? createDefaultZoneStatus(activeZone.h3_index);
       const currentCat = base.categories[category];
@@ -185,6 +189,12 @@ export default function HomePage() {
         },
       };
     });
+  };
+
+  const handleOptimisticRollback = () => {
+    if (previousStatusRef.current) {
+      setZoneStatus(previousStatusRef.current);
+    }
   };
 
   const showToast = (msg: string) => {
@@ -222,11 +232,12 @@ export default function HomePage() {
         defaultLat={activeZone.lat}
         defaultLng={activeZone.lng}
         onOptimisticReport={handleOptimisticReport}
+        onOptimisticRollback={handleOptimisticRollback}
         onReportSuccess={showToast}
       />
 
       {/* Main Content Area */}
-      <div className="flex-1 pb-24">
+      <div className="flex-1 pb-32">
         {/* Offline Banner */}
         <OfflineBanner
           isOffline={isOffline}
@@ -254,11 +265,11 @@ export default function HomePage() {
             </span>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             <Link
               href="/settings"
               aria-label="নোটিফিকেশন সেটিংস"
-              className="p-2 rounded-xl border border-[var(--surface-border)] bg-[var(--surface-bg)] text-[var(--text-sub)] hover:text-[var(--text-main)] transition-colors"
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl border border-[var(--surface-border)] bg-[var(--surface-bg)] text-[var(--text-sub)] hover:text-[var(--text-main)] flex items-center justify-center transition-colors shrink-0"
             >
               <Bell className="w-4 h-4" />
             </Link>
@@ -266,7 +277,7 @@ export default function HomePage() {
               h3Index={activeZone.h3_index}
               areaName={activeZone.area_name_bn}
             />
-            <ThemeToggle />
+            <ThemeToggle variant="compact" />
           </div>
         </div>
 

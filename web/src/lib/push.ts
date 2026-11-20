@@ -132,9 +132,11 @@ export async function subscribeToPush(
     });
 
     return { success: true };
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : String(err);
-    return { success: false, error: msg };
+  } catch {
+    return {
+      success: false,
+      error: 'পুশ নোটিফিকেশন চালু করা সম্ভব হয়নি। ব্রাউজারের নোটিফিকেশন পারমিশন ও নেটওয়ার্ক সংযোগ পরীক্ষা করুন।',
+    };
   }
 }
 

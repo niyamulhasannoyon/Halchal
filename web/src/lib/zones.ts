@@ -130,7 +130,16 @@ const HOME_ZONE_STORAGE_KEY = 'halchal_home_zone_h3';
 
 export function getStoredHomeZone(): string | null {
   if (typeof window === 'undefined') return null;
-  return localStorage.getItem(HOME_ZONE_STORAGE_KEY) || DEFAULT_DHAKA_ZONE.h3_index;
+  const direct = localStorage.getItem(HOME_ZONE_STORAGE_KEY);
+  if (direct) return direct;
+  try {
+    const selected = localStorage.getItem('halchal-selected-zone');
+    if (selected) {
+      const parsed = JSON.parse(selected);
+      if (parsed?.h3_index) return parsed.h3_index;
+    }
+  } catch {}
+  return DEFAULT_DHAKA_ZONE.h3_index;
 }
 
 export function setStoredHomeZone(h3Index: string): void {

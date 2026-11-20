@@ -18,8 +18,16 @@ interface OneTapReportSheetProps {
     state: UserReportState,
     price?: number | null
   ) => void;
+  onOptimisticRollback?: () => void;
   onReportSuccess?: (message: string) => void;
 }
+
+const CATEGORY_POSSESSIVE: Record<UtilityCategory, string> = {
+  electricity: 'বিদ্যুতের',
+  gas: 'গ্যাসের',
+  water: 'পানির',
+  lpg: 'এলপিজির',
+};
 
 const LPG_PRICE_CHIPS = [1400, 1450, 1500, 1550, 1600];
 
@@ -30,6 +38,7 @@ export function OneTapReportSheet({
   defaultLat,
   defaultLng,
   onOptimisticReport,
+  onOptimisticRollback,
   onReportSuccess,
 }: OneTapReportSheetProps) {
   const [step, setStep] = useState<1 | 2>(1);
@@ -151,6 +160,8 @@ export function OneTapReportSheet({
         onReportSuccess?.('আপনার রিপোর্ট সফলভাবে গ্রহণ করা হয়েছে!');
         onClose();
       } else {
+        // Rollback optimistic UI update upon server rejection
+        onOptimisticRollback?.();
         // Bengali error mapping from API or error codes
         setIsSubmitting(false);
         const errMsg =
@@ -198,7 +209,7 @@ export function OneTapReportSheet({
               >
                 <span>📢</span>
                 <span>
-                  {step === 1 ? 'কিসের অবস্থা জানাবেন?' : `${UTILITY_CATEGORIES[selectedCategory!].nameBn}র অবস্থা কী?`}
+                  {step === 1 ? 'কিসের অবস্থা জানাবেন?' : `${CATEGORY_POSSESSIVE[selectedCategory!]} অবস্থা কী?`}
                 </span>
               </h2>
               <p className="font-bengali text-xs text-[var(--text-sub)]">
@@ -417,7 +428,7 @@ export function OneTapReportSheet({
 
         {/* Disclaimer in Bengali */}
         <p className="font-bengali text-[11px] text-[var(--text-muted)] text-center mt-4">
-          নাগরিকদের তথ্যের ভিত্তিতে তৈরি, এটি কোনো অফিশিয়াল পরিমাপ নয় (CLAUDE.md)
+          নাগরিকদের তথ্যের ভিত্তিতে তৈরি, এটি কোনো অফিশিয়াল পরিমাপ নয়
         </p>
       </div>
     </div>
