@@ -487,3 +487,23 @@ This file contains the chronological log of all architectural, product, and engi
 - **Consequences:**
   - *Positive:* 100% test pass rate across all Playwright and Vitest suites (14 Playwright E2E tests passing, 42 Vitest tests passing, 43 Node unit tests passing = 99 automated tests passing). High search visibility with complete crawlable HTML density, zero duplicate indexing, and immunity from low-quality soft-404 thin content penalties.
   - *Trade-off:* Unverified or emerging zones with sparse crowd participation are intentionally noindexed until reaching community reporting consensus.
+
+---
+
+### ADR-0018: Halchal Admin Panel Architecture — Isolated Next.js Application, Mandatory TOTP MFA (AAL2), Role-Based Access Control, and Immutable Audit Trail
+- **Date:** 2026-11-20
+- **Status:** Accepted
+- **Context:**
+  Operating Halchal requires administrative tools for monitoring health, moderating abuse, managing zones, official prices, notifications, and SEO flags. Exposing these tools on the citizen web app (`web/`) risks targeted attacks, search engine indexing, performance degradation on 2G/3G devices, and potential citizen privacy violations.
+- **Decision:**
+  1. *Isolated Application in `admin/`:* Separate Next.js 15 App Router app deployed on a dedicated administrative subdomain (`admin.<domain>`).
+  2. *Zero Indexation & Strict Security Headers:* Every response transmits `X-Robots-Tag: noindex, nofollow`, `robots.txt` disallows all routes, and zero sitemaps. Comprehensive CSP, frame-ancestors 'none', HSTS, referrer-policy no-referrer, permissions-policy.
+  3. *Mandatory TOTP MFA (AAL2):* Public signup disabled. Admins exist exclusively in `admin_users`. Sessions without AAL2 can access nothing except MFA enrollment/verification and logout. Session idle timeout 30 min, absolute timeout 12 h.
+  4. *Typed RBAC & Service Role Isolation:* Roles (`owner`, `moderator`, `content_editor`, `analyst`) governed by typed matrix and `public.is_admin()` SECURITY DEFINER function with `search_path = ''`. Service-role key restricted strictly to server code.
+  5. *Append-Only Audit Trail:* Relational `admin_audit_log` with database trigger blocking all `UPDATE` and `DELETE` operations. Sensitive mutations require a reason. Pseudonymized IP hashing (`SHA-256`) and strict secret redaction.
+  6. *Safe First Admin Bootstrap & Leak Prevention:* CLI script `scripts/create-first-admin.ts` with hidden password prompt, strong password policy, zero hardcoded credentials, and CI secret scanner (`scripts/check-secrets-leakage.mjs`).
+  7. *Accessible UI:* English administrative controls with authentic Bengali operational data, light/dark themes, and responsive layout.
+- **Consequences:**
+  - *Positive:* Complete isolation of privileged operational tools, strict multi-factor authentication, non-negotiable citizen privacy preserved, zero search engine leakage, and fully verifiable audit trail.
+  - *Trade-off:* Requires managing a separate Next.js build and deployment target on an independent subdomain.
+
