@@ -21,6 +21,9 @@ export const metadata: Metadata = {
     icon: '/favicon.ico',
     apple: '/apple-touch-icon.png',
   },
+  verification: {
+    google: '4mbgGQs3PoTcMTbCYLFypmE_u9bbwfwW4_F85kWGmXA',
+  },
 };
 
 export const viewport: Viewport = {
