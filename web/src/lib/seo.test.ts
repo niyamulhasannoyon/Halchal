@@ -36,15 +36,17 @@ describe('1. Site Configuration Module (siteConfig)', () => {
     expect(siteConfig.url.startsWith('http')).toBe(true);
   });
 
-  it('fails build in production when NEXT_PUBLIC_SITE_URL is missing', () => {
+  it('fails build in production when NEXT_PUBLIC_SITE_URL is missing in strict mode', () => {
     const originalEnv = process.env.NODE_ENV;
     const originalSiteUrl = process.env.NEXT_PUBLIC_SITE_URL;
     const originalAppUrl = process.env.NEXT_PUBLIC_APP_URL;
     const originalTestMode = process.env.HALCHAL_TEST_MODE;
+    const originalStrict = process.env.HALCHAL_STRICT_SITE_URL;
 
     try {
       // @ts-expect-error mutating for testing
       process.env.NODE_ENV = 'production';
+      process.env.HALCHAL_STRICT_SITE_URL = 'true';
       delete process.env.NEXT_PUBLIC_SITE_URL;
       delete process.env.NEXT_PUBLIC_APP_URL;
       delete process.env.HALCHAL_TEST_MODE;
@@ -59,6 +61,41 @@ describe('1. Site Configuration Module (siteConfig)', () => {
       if (originalSiteUrl) process.env.NEXT_PUBLIC_SITE_URL = originalSiteUrl;
       if (originalAppUrl) process.env.NEXT_PUBLIC_APP_URL = originalAppUrl;
       if (originalTestMode) process.env.HALCHAL_TEST_MODE = originalTestMode;
+      if (originalStrict) process.env.HALCHAL_STRICT_SITE_URL = originalStrict;
+      else delete process.env.HALCHAL_STRICT_SITE_URL;
+    }
+  });
+
+  it('falls back to Vercel production URL or safe default in production when NEXT_PUBLIC_SITE_URL is not set', () => {
+    const originalEnv = process.env.NODE_ENV;
+    const originalSiteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+    const originalAppUrl = process.env.NEXT_PUBLIC_APP_URL;
+    const originalTestMode = process.env.HALCHAL_TEST_MODE;
+    const originalVercelUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL;
+
+    try {
+      // @ts-expect-error mutating for testing
+      process.env.NODE_ENV = 'production';
+      delete process.env.NEXT_PUBLIC_SITE_URL;
+      delete process.env.NEXT_PUBLIC_APP_URL;
+      delete process.env.HALCHAL_TEST_MODE;
+      delete process.env.HALCHAL_STRICT_SITE_URL;
+
+      // Test Vercel auto-detection
+      process.env.VERCEL_PROJECT_PRODUCTION_URL = 'halchal420.vercel.app';
+      expect(getSiteUrl()).toBe('https://halchal420.vercel.app');
+
+      // Test safe production fallback
+      delete process.env.VERCEL_PROJECT_PRODUCTION_URL;
+      expect(getSiteUrl()).toBe('https://halchal.com.bd');
+    } finally {
+      // @ts-expect-error mutating for testing
+      process.env.NODE_ENV = originalEnv;
+      if (originalSiteUrl) process.env.NEXT_PUBLIC_SITE_URL = originalSiteUrl;
+      if (originalAppUrl) process.env.NEXT_PUBLIC_APP_URL = originalAppUrl;
+      if (originalTestMode) process.env.HALCHAL_TEST_MODE = originalTestMode;
+      if (originalVercelUrl) process.env.VERCEL_PROJECT_PRODUCTION_URL = originalVercelUrl;
+      else delete process.env.VERCEL_PROJECT_PRODUCTION_URL;
     }
   });
 });

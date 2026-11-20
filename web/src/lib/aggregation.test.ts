@@ -105,11 +105,15 @@ describe('Spatial Multi-H3 Cell Aggregation Engine', () => {
 
     const cell1 = createDefaultZoneStatus('883cf10cebfffff');
     cell1.updated_at = timeA;
-    cell1.categories.electricity.updated_at = timeA;
+    for (const cat of ['electricity', 'gas', 'water', 'lpg'] as const) {
+      cell1.categories[cat].updated_at = timeA;
+    }
 
     const cell2 = createDefaultZoneStatus('883cf10ca1fffff');
     cell2.updated_at = timeB;
-    cell2.categories.electricity.updated_at = timeB;
+    for (const cat of ['electricity', 'gas', 'water', 'lpg'] as const) {
+      cell2.categories[cat].updated_at = timeB;
+    }
 
     const aggregated = aggregateZoneStatuses([cell1, cell2]);
     expect(aggregated.updated_at).toBe(timeB);

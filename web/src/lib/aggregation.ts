@@ -98,6 +98,11 @@ export function aggregateZoneStatuses(
   const aggregatedCategories: Record<UtilityCategory, ZoneCategoryStatus> = {} as any;
 
   let latestUpdatedAt = statuses[0].updated_at;
+  for (const s of statuses) {
+    if (new Date(s.updated_at).getTime() > new Date(latestUpdatedAt).getTime()) {
+      latestUpdatedAt = s.updated_at;
+    }
+  }
 
   for (const cat of categories) {
     let winningState: ZoneDisplayState = 'unknown';
