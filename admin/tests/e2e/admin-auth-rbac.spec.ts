@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('Admin Panel Security & Authentication Guardrails', () => {
+test.describe('Admin Panel Security & Google OAuth Guardrails', () => {
   test('disallows search engine indexing via robots.txt and security headers', async ({ request, page }) => {
     // 1. Verify robots.txt blocks all crawlers
     const robotsRes = await request.get('/robots.txt');
@@ -33,29 +33,26 @@ test.describe('Admin Panel Security & Authentication Guardrails', () => {
     await expect(page).toHaveURL(/\/login/);
   });
 
-  test('renders login interface with Bengali disclaimer and handles failed login gracefully', async ({ page }) => {
+  test('renders Google Sign-In interface with authorized emails and displays unauthorized warning', async ({ page }) => {
+    // 1. Check clean login page
     await page.goto('/login');
 
     await expect(page.locator('h1')).toContainText('Halchal Operations Panel');
     await expect(page.locator('text=হালচাল অভ্যন্তরীণ প্রশাসন ও নজরদারি পোর্টাল')).toBeVisible();
 
-    const emailInput = page.locator('#admin-email');
-    const passwordInput = page.locator('#admin-password');
-    const submitBtn = page.locator('button[type="submit"]');
+    // Verify authorized accounts are displayed
+    await expect(page.locator('text=niyamulhasanbd@gmail.com')).toBeVisible();
+    await expect(page.locator('text=niyamulhasan1089@gmail.com')).toBeVisible();
 
-    await expect(emailInput).toBeVisible();
-    await expect(passwordInput).toBeVisible();
-    await expect(submitBtn).toBeVisible();
+    // Verify Google sign-in button exists
+    const googleBtn = page.getByRole('button', { name: /Sign In with Google/i });
+    await expect(googleBtn).toBeVisible();
 
-    // Attempt invalid credentials
-    await emailInput.fill('invalid-operator@halchal.bd');
-    await passwordInput.fill('InvalidPassword123!@#');
-    await submitBtn.click();
-
-    // Generic error message should appear
+    // 2. Navigate with unauthorized_email error parameter
+    await page.goto('/login?error=unauthorized_email');
     const alert = page.locator('#auth-error-alert');
     await expect(alert).toBeVisible();
-    await expect(alert).toContainText('Invalid email or password');
+    await expect(alert).toContainText('অননুমোদিত গুগল অ্যাকাউন্ট');
   });
 
   test('rejects mutations on protected API endpoints when unauthenticated', async ({ request }) => {
@@ -76,6 +73,7 @@ test.describe('Admin Panel Security & Authentication Guardrails', () => {
 
     // 3. Reset MFA without session
     const resetRes = await request.post('/api/admins/reset-mfa', {
+      headers: { 'Content-Type': 'application/json' },
       data: {
         userId: '11111111-1111-1111-1111-111111111111',
         reason: 'Attempt reset',

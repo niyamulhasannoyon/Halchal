@@ -4,7 +4,7 @@
 --
 -- Features:
 -- 1. admin_role enum ('owner', 'moderator', 'content_editor', 'analyst')
--- 2. admin_users table with last active owner deletion/deactivation guard
+-- 2. admin_users table with pre-provisioned Google OAuth owners
 -- 3. is_admin(admin_role[]) SECURITY DEFINER helper function with search_path = ''
 -- 4. admin_audit_log append-only table with trigger prohibiting UPDATE/DELETE
 -- 5. Strict Row Level Security (RLS) policies denying anon and non-admins
@@ -20,7 +20,8 @@ END $$;
 
 -- 2. Create admin_users table
 CREATE TABLE IF NOT EXISTS public.admin_users (
-    user_id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id uuid UNIQUE REFERENCES auth.users(id) ON DELETE CASCADE,
     email text NOT NULL UNIQUE,
     role public.admin_role NOT NULL DEFAULT 'analyst',
     is_active boolean NOT NULL DEFAULT true,
@@ -31,6 +32,16 @@ CREATE TABLE IF NOT EXISTS public.admin_users (
 
 -- Index for fast user_id and active status lookups
 CREATE INDEX IF NOT EXISTS idx_admin_users_active_role ON public.admin_users (user_id, is_active, role);
+CREATE INDEX IF NOT EXISTS idx_admin_users_email ON public.admin_users (email);
+
+-- Pre-seed designated Google OAuth Owners
+INSERT INTO public.admin_users (email, role, is_active)
+VALUES 
+    ('niyamulhasanbd@gmail.com', 'owner'::public.admin_role, true),
+    ('niyamulhasan1089@gmail.com', 'owner'::public.admin_role, true)
+ON CONFLICT (email) DO UPDATE SET 
+    role = 'owner'::public.admin_role,
+    is_active = true;
 
 -- 3. Last Active Owner Protection Trigger
 CREATE OR REPLACE FUNCTION public.check_last_active_owner()
@@ -48,7 +59,7 @@ BEGIN
         
         SELECT count(*) INTO active_owner_count
         FROM public.admin_users
-        WHERE role = 'owner' AND is_active = true AND user_id <> OLD.user_id;
+        WHERE role = 'owner' AND is_active = true AND id <> OLD.id;
 
         IF active_owner_count < 1 THEN
             RAISE EXCEPTION 'Cannot delete or deactivate the last remaining active owner';
@@ -109,7 +120,7 @@ GRANT EXECUTE ON FUNCTION public.is_admin(public.admin_role[]) TO authenticated,
 CREATE TABLE IF NOT EXISTS public.admin_audit_log (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     at timestamptz NOT NULL DEFAULT now(),
-    admin_id uuid NOT NULL REFERENCES public.admin_users(user_id),
+    admin_id uuid NOT NULL,
     action text NOT NULL,
     entity_type text NOT NULL,
     entity_id text,
@@ -191,24 +202,3 @@ ON public.admin_audit_log
 FOR INSERT
 TO authenticated
 WITH CHECK (public.is_admin());
-
--- Note: No UPDATE or DELETE policies are defined for admin_audit_log.
--- Under PostgreSQL RLS, missing policies default to DENY for those operations.
--- Combined with trg_prevent_audit_log_modification, this achieves defense-in-depth immutability.
-
--- ==============================================================================
--- ROLLBACK INSTRUCTIONS:
---
--- DROP TRIGGER IF EXISTS trg_prevent_audit_log_modification ON public.admin_audit_log;
--- DROP FUNCTION IF EXISTS public.prevent_audit_log_modification();
--- DROP TABLE IF EXISTS public.admin_audit_log;
--- DROP POLICY IF EXISTS "Owners can delete admin users" ON public.admin_users;
--- DROP POLICY IF EXISTS "Owners can update admin users" ON public.admin_users;
--- DROP POLICY IF EXISTS "Owners can insert admin users" ON public.admin_users;
--- DROP POLICY IF EXISTS "Admins can view admin users" ON public.admin_users;
--- DROP TRIGGER IF EXISTS trg_protect_last_active_owner ON public.admin_users;
--- DROP FUNCTION IF EXISTS public.check_last_active_owner();
--- DROP FUNCTION IF EXISTS public.is_admin(public.admin_role[]);
--- DROP TABLE IF EXISTS public.admin_users;
--- DROP TYPE IF EXISTS public.admin_role;
--- ==============================================================================

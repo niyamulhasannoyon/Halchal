@@ -120,13 +120,32 @@ export async function requireAdminSession(
 
   // 4. Query public.admin_users using service client to eliminate RLS recursion
   const serviceClient = getServiceRoleClient();
-  const { data: adminUser, error: adminError } = await serviceClient
+  let { data: adminUser, error: adminError } = await serviceClient
     .from('admin_users')
     .select('*')
     .eq('user_id', user.id)
     .single();
 
-  if (adminError || !adminUser) {
+  if (!adminUser && user.email) {
+    // Fallback lookup by email
+    const { data: emailRecord } = await serviceClient
+      .from('admin_users')
+      .select('*')
+      .ilike('email', user.email)
+      .single();
+
+    if (emailRecord) {
+      adminUser = emailRecord;
+      if (emailRecord.user_id !== user.id) {
+        await serviceClient
+          .from('admin_users')
+          .update({ user_id: user.id })
+          .eq('id', emailRecord.id);
+      }
+    }
+  }
+
+  if (!adminUser) {
     throw new Error('FORBIDDEN: User account is not registered in admin_users directory.');
   }
 
